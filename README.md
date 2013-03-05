@@ -1,7 +1,7 @@
 What is it?
 ===========
 
-It allows you to read a line interactively from a Vim script.
+A yet another Vim script for buffer switching.
 
 
 Status
@@ -15,22 +15,22 @@ Installation
 
 Assuming you have Pathogen up and running:
 
-    cd ~/.vim/bundle
-    git clone git://github.com/adaszko/getline.git
+    $ cd ~/.vim/bundle
+    $ git clone git://github.com/adaszko/chbuf.vim
 
 
 Usage
 =====
 
-    :echo getline#GetLine('> ')
+Just add a mapping of your choice to your `.vimrc`:
+
+    noremap <Leader>b :call chbuf#PromptBuffer()<CR>
 
 
-TODO
-====
+To Do
+=====
 
-* Allow for caret to slide on top of character without erasing them
-* User-specified hooks on key presses
-* Right prompt computed by user code each time contents change
+ * Tiny screencast
 
 
 License
