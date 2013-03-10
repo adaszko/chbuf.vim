@@ -1,5 +1,7 @@
 " DONE Show only path basenames as suggestions
-" TODO Truncate choices on &columns
+" DONE Get rid of "Press ENTER..." message
+" DONE Truncate choices on &columns
+" TODO There may be two buffers of the same name --- pick the first one
 " TODO Tab-completion of longest common prefix
 " TODO Filter out current buffer in choices
 " TODO Score expand('#') file highest and select it initially
@@ -46,8 +48,28 @@ function! MatchBuffers(input) " {{{
 endfunction " }}}
 
 
+function! LongestPrefixFitting(elems, length) " {{{
+    let curlen = 0
+
+    for i in range(len(a:elems))
+        let curlen += strlen(a:elems[i])
+        if curlen > a:length
+            if i == 0
+                return []
+            else
+                return a:elems[:i-1]
+            endif
+        endif
+    endfor
+
+    return a:elems
+endfunction " }}}
+
+
 function! BufferNameCallback(input) " {{{
     let buffers = MatchBuffers(a:input)
+    let cols = &columns - len(buffers) - 1 - 1
+    let buffers = LongestPrefixFitting(buffers, cols)
 
     if len(buffers) == 0
         return ''
@@ -58,10 +80,13 @@ function! BufferNameCallback(input) " {{{
 endfunction " }}}
 
 
-function! chbuf#PromptBuffer() " {{{
-    let name = getline#GetLine('∷ ', 'BufferNameCallback')
-    execute 'silent' 'buffer' name
-    return name
+function! PromptBuffer() " {{{
+    return getline#GetLine('∷ ', 'BufferNameCallback')
+endfunction " }}}
+
+
+function! chbuf#SwitchBuffer() " {{{
+    execute 'silent' 'buffer' PromptBuffer()
 endfunction " }}}
 
 

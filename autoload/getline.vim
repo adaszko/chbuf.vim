@@ -2,8 +2,14 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
+function! s:Echo(line)
+    echon strpart(a:line, 0, &columns-1)
+endfunction
+
+
 function! s:ClearLine(contents) " {{{
-    echon "\r" . repeat(' ', strlen(a:contents)) . "\r"
+    let rubber = "\r" . repeat(' ', strlen(a:contents)) . "\r"
+    call s:Echo(rubber)
 endfunction! " }}}
 
 
@@ -23,8 +29,8 @@ function! getline#GetLine(prompt, get_status) " {{{
     let status = call(a:get_status, [line])
 
     let displayed = a:prompt . line . status
-    echon displayed
-    echon "\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line))
+    call s:Echo(displayed)
+    call s:Echo("\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line)))
 
     while 1
         let c = getchar()
@@ -58,8 +64,8 @@ function! getline#GetLine(prompt, get_status) " {{{
         call s:ClearLine(displayed)
         let status = call(a:get_status, [line])
         let displayed = a:prompt . line . status
-        echon "\r" . displayed
-        echon "\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line))
+        call s:Echo("\r" . displayed)
+        call s:Echo("\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line)))
     endwhile
 
     call s:ClearLine(displayed)
