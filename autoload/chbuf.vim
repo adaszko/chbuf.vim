@@ -1,8 +1,9 @@
-" TODO There may be two buffers of the same name --- pick the first one
+" TODO Implement more suitable matching algorithm
 " TODO Tab-completion of longest common prefix
 " TODO Make Tab behave as enter when longest common prefix is unambiguous
 " TODO Score higher subsequences occuring after directory separator
 " TODO Make functions script-private once they are sufficiently tested
+" DONE There may be two buffers of the same name --- pick the first one
 " DONE Score expand('#') file highest and select it initially
 " DONE Filter out current buffer in choices
 " DONE Show only path basenames as suggestions
@@ -76,20 +77,18 @@ function! MatchBuffer(input) " {{{
 
     call filter(buffers, printf('v:val.name =~ "%s"', escape(a:input, '"')))
 
-    call map(buffers, 'v:val.basename')
-
     return buffers
 endfunction " }}}
 function! BufferNameCallback(input) " {{{
     let buffers = MatchBuffer(a:input)
-    let cols = &columns - len(buffers) - 1 - 1
 
     if len(buffers) == 0
-        return ''
+        return [bufnr('%'), '']
     endif
 
-    let caption = join(buffers)
-    return ' ↦ ' . caption
+    let basenames = map(copy(buffers), 'v:val.basename')
+    let caption = ' ↦ ' . join(basenames)
+    return [buffers[0].number, caption]
 endfunction " }}}
 function! PromptBuffer() " {{{
     return getline#GetLine('∷ ', 'BufferNameCallback')
