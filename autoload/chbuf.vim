@@ -1,17 +1,3 @@
-" TODO Implement more suitable matching algorithm
-" TODO Tab-completion of longest common prefix
-" TODO Make Tab behave as enter when longest common prefix is unambiguous
-" TODO Score higher subsequences occuring after directory separator
-" TODO Make functions script-private once they are sufficiently tested
-" DONE There may be two buffers of the same name --- pick the first one
-" DONE Score expand('#') file highest and select it initially
-" DONE Filter out current buffer in choices
-" DONE Show only path basenames as suggestions
-" DONE Get rid of "Press ENTER..." message
-" DONE Truncate choices on &columns
-" IDEA Perhaps <S-Return> should also :lcd into file's directory
-
-
 let s:save_cpo = &cpo
 set cpo&vim
 

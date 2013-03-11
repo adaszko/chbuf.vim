@@ -7,7 +7,7 @@ A yet another Vim script for buffer switching.
 Status
 ======
 
-Unusable yet.
+Works, but wouldn't recommend using it yet.
 
 
 Installation
@@ -22,14 +22,20 @@ Assuming you have Pathogen up and running:
 Usage
 =====
 
-Just add a mapping of your choice to your `.vimrc`:
+Just add a mapping of your choice to `.vimrc`:
 
-    noremap <Leader>b :call chbuf#PromptBuffer()<CR>
+    noremap <silent> <Leader>b :call chbuf#SwitchBuffer()<CR>
 
 
 To Do
 =====
 
+ * Implement matching algorithm more suitable for buffer names
+ * Tab-completion up to longest common prefix
+ * Make Tab behave as enter when longest common prefix is unambiguous
+ * Score higher subsequences occuring after directory separator
+ * Make functions script-private once they are sufficiently tested
+ * Should <S-Return> also :lcd into file's directory?
  * Tiny screencast
 
 
