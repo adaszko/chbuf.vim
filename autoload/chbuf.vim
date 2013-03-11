@@ -26,7 +26,9 @@ endfunction " }}}
 function! ScoredBuffers() " {{{
     let result = []
 
-    for buffer in range(bufnr('$'))
+    for buffer in range(1, bufnr('$'))
+        let score = 0
+
         if !bufexists(buffer)
             continue
         endif
@@ -44,8 +46,6 @@ function! ScoredBuffers() " {{{
         if name == ''
             continue
         endif
-
-        let score = 0
 
         if buflisted(buffer)
             let score += 1000
