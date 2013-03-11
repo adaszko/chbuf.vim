@@ -1,3 +1,6 @@
+" TODO Multiply &columns by &cmdheight
+
+
 let s:save_cpo = &cpo
 set cpo&vim
 
