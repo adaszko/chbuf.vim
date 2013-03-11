@@ -1,12 +1,9 @@
-" TODO Multiply &columns by &cmdheight
-
-
 let s:save_cpo = &cpo
 set cpo&vim
 
 
 function! s:Echo(line)
-    echon strpart(a:line, 0, &columns-1)
+    echon strpart(a:line, 0, &columns - 1)
 endfunction
 
 

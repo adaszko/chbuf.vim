@@ -80,26 +80,9 @@ function! MatchBuffer(input) " {{{
 
     return buffers
 endfunction " }}}
-function! LongestPrefixFitting(elems, length) " {{{
-    let curlen = 0
-
-    for i in range(len(a:elems))
-        let curlen += strlen(a:elems[i])
-        if curlen > a:length
-            if i == 0
-                return []
-            else
-                return a:elems[:i-1]
-            endif
-        endif
-    endfor
-
-    return a:elems
-endfunction " }}}
 function! BufferNameCallback(input) " {{{
     let buffers = MatchBuffer(a:input)
     let cols = &columns - len(buffers) - 1 - 1
-    let buffers = LongestPrefixFitting(buffers, cols)
 
     if len(buffers) == 0
         return ''
