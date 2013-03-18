@@ -30,6 +30,7 @@ Just add a mapping of your choice to `.vimrc`:
 To Do
 =====
 
+ * Spaces should indicate start of another pattern
  * Implement matching algorithm more suitable for buffer names
  * Make functions script-private once they are sufficiently tested
  * Tiny screencast

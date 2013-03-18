@@ -1,4 +1,3 @@
-" TODO Include v:oldfiles in buffers list
 " TODO Make <C-s>, <C-v> and <C-t> open splits or tab respectively for selected buffer
 
 
@@ -36,8 +35,9 @@ function! SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
-function! BufferFromPath(path) " {{{
-    return {'switch': function('SwitchToPath')}
+function! BufferFromPath(path, score) " {{{
+    let name = split(a:path, s:directory_separator)[-1]
+    return {'path': a:path, 'name': name, 'score': a:score, 'switch': function('SwitchToPath')}
 endfunction " }}}
 
 function! ScoredBuffers() " {{{
@@ -69,6 +69,16 @@ function! ScoredBuffers() " {{{
         endif
 
         call add(result, BufferFromNumber(buffer, name, score))
+    endfor
+
+    for path in v:oldfiles
+        let score = 0
+
+        if !filereadable(path)
+            let score -= 100
+        endif
+
+        call add(result, BufferFromPath(path, score))
     endfor
 
     return result
