@@ -18,7 +18,7 @@ function! s:WithoutLastWord(string) " {{{
 
     return result
 endfunction " }}}
-function! getline#GetLine(prompt, get_status) " {{{
+function! getline#GetLine(prompt, get_status, default) " {{{
     let line = ""
     let [choice, status] = call(a:get_status, [line])
 
@@ -28,27 +28,27 @@ function! getline#GetLine(prompt, get_status) " {{{
 
     while 1
         let c = getchar()
-        if c == 27 " escape
-            return ""
+        if c == 27 " <Esc>
             call s:ClearLine(displayed)
+            return a:default
         endif
 
         if type(c) == type(0)
-            if c == 13 " enter
+            if c == 13 " <Enter>
                 break
-            elseif c == 21 " ^U
+            elseif c == 21 " <C-U>
                 let line = ""
-            elseif c == 23 " ^W
+            elseif c == 23 " <C-W>
                 let line = s:WithoutLastWord(line)
             else
                 let line .= nr2char(c)
             endif
         elseif type(c) == type("")
-            if c == "\x80kb" " backspace
+            if c == "\x80kb" " <BS>
                 " Remove last character of input
                 if empty(line)
                     call s:ClearLine(displayed)
-                    return ""
+                    return a:default
                 else
                     let line = strpart(line, 0, strlen(line)-1)
                 endif

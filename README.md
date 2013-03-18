@@ -31,11 +31,7 @@ To Do
 =====
 
  * Implement matching algorithm more suitable for buffer names
- * Tab-completion up to longest common prefix
- * Make Tab behave as enter when longest common prefix is unambiguous
- * Score higher subsequences occuring after directory separator
  * Make functions script-private once they are sufficiently tested
- * Should <S-Return> also :lcd into file's directory?
  * Tiny screencast
 
 

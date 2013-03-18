@@ -1,14 +1,45 @@
+" TODO Include v:oldfiles in buffers list
+" TODO Make <C-s>, <C-v> and <C-t> open splits or tab respectively for selected buffer
+
+
 let s:save_cpo = &cpo
 set cpo&vim
 
 
-function! SplitPath(path) " {{{
-    if has('unix')
-        return split(a:path, '/')
-    else
-        return split(a:path, '\\')
-    endif
+if has('unix')
+    let s:directory_separator = '/'
+else
+    let s:directory_separator = '\\'
+endif
+
+if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
+    let s:prompt_string = '∷ '
+    let s:choices_string = ' ↦ '
+else
+    let s:prompt_string = ':: '
+    let s:choices_string = ' => '
+endif
+
+function! SwitchToNumber() dict " {{{
+    execute 'silent' 'buffer' self.number
 endfunction " }}}
+
+function! BufferFromNumber(number, name, score) " {{{
+    return {'number': a:number, 'name': a:name, 'score': a:score, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
+endfunction " }}}
+
+function! CurrentBuffer() " {{{
+    return BufferFromNumber(bufnr('%'), bufname('%'), 0)
+endfunction " }}}
+
+function! SwitchToPath() dict " {{{
+    execute 'silent' 'edit' self.path
+endfunction " }}}
+
+function! BufferFromPath(path) " {{{
+    return {'switch': function('SwitchToPath')}
+endfunction " }}}
+
 function! ScoredBuffers() " {{{
     let result = []
 
@@ -16,6 +47,10 @@ function! ScoredBuffers() " {{{
         let score = 0
 
         if !bufexists(buffer)
+            continue
+        endif
+
+        if !buflisted(buffer)
             continue
         endif
 
@@ -33,19 +68,12 @@ function! ScoredBuffers() " {{{
             continue
         endif
 
-        if buflisted(buffer)
-            let score += 1000
-        else
-            let score -= 1000
-        endif
-
-        let basename = SplitPath(name)[-1]
-
-        call add(result, {'score': score, 'number': buffer, 'name': name, 'basename': basename})
+        call add(result, BufferFromNumber(buffer, name, score))
     endfor
 
     return result
 endfunction " }}}
+
 function! CompareScores(left, right) " {{{
     if a:left.score > a:right.score
         return -1
@@ -55,32 +83,39 @@ function! CompareScores(left, right) " {{{
         return 1
     endif
 endfunction " }}}
-function! SortBuffers(buffers) " {{{
-    return sort(a:buffers, 'CompareScores')
-endfunction " }}}
-function! MatchBuffer(input) " {{{
-    let buffers = SortBuffers(ScoredBuffers())
 
-    call filter(buffers, printf('v:val.name =~ "%s"', escape(a:input, '"')))
-
-    return buffers
+function! GetSortedBuffers() " {{{
+    return sort(ScoredBuffers(), 'CompareScores')
 endfunction " }}}
+
+function! FilterBuffersMatching(input, buffers) " {{{
+    let input = tolower(a:input)
+    return filter(a:buffers, printf('stridx(tolower(v:val.name), "%s") >= 0', escape(input, '"')))
+endfunction " }}}
+
+function! MakeChoicesString(buffers) " {{{
+    let names = map(copy(a:buffers), 'v:val.name')
+    let choices = s:choices_string . join(names)
+    return choices
+endfunction " }}}
+
 function! BufferNameCallback(input) " {{{
-    let buffers = MatchBuffer(a:input)
+    let buffers = FilterBuffersMatching(a:input, GetSortedBuffers())
 
     if len(buffers) == 0
-        return [bufnr('%'), '']
+        return [CurrentBuffer(), '']
     endif
 
-    let basenames = map(copy(buffers), 'v:val.basename')
-    let caption = ' ↦ ' . join(basenames)
-    return [buffers[0].number, caption]
+    return [buffers[0], MakeChoicesString(buffers)]
 endfunction " }}}
+
 function! PromptBuffer() " {{{
-    return getline#GetLine('∷ ', 'BufferNameCallback')
+    return getline#GetLine(s:prompt_string, 'BufferNameCallback', CurrentBuffer())
 endfunction " }}}
+
 function! chbuf#SwitchBuffer() " {{{
-    execute 'silent' 'buffer' PromptBuffer()
+    let buffer = PromptBuffer()
+    call buffer.switch()
 endfunction " }}}
 
 
