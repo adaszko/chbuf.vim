@@ -27,8 +27,12 @@ function! BufferFromNumber(number, name, score) " {{{
     return {'number': a:number, 'name': a:name, 'score': a:score, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
 endfunction " }}}
 
-function! CurrentBuffer() " {{{
-    return BufferFromNumber(bufnr('%'), bufname('%'), 0)
+function! Nop() dict " {{{
+
+endfunction " }}}
+
+function! DummyBuffer() " {{{
+    return {'switch': function('Nop')}
 endfunction " }}}
 
 function! SwitchToPath() dict " {{{
@@ -113,14 +117,14 @@ function! BufferNameCallback(input) " {{{
     let buffers = FilterBuffersMatching(a:input, GetSortedBuffers())
 
     if len(buffers) == 0
-        return [CurrentBuffer(), '']
+        return [DummyBuffer(), '']
     endif
 
     return [buffers[0], MakeChoicesString(buffers)]
 endfunction " }}}
 
 function! PromptBuffer() " {{{
-    return getline#GetLine(s:prompt_string, 'BufferNameCallback', CurrentBuffer())
+    return getline#GetLine(s:prompt_string, 'BufferNameCallback', DummyBuffer())
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
