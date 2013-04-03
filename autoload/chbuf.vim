@@ -1,6 +1,3 @@
-" TODO Make <C-s>, <C-v> and <C-t> open splits or tab respectively for selected buffer
-
-
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -104,7 +101,14 @@ endfunction " }}}
 
 function! FilterBuffersMatching(input, buffers) " {{{
     let input = tolower(a:input)
-    return filter(a:buffers, printf('stridx(tolower(v:val.name), "%s") >= 0', escape(input, '"')))
+    let needles = split(input, '\v\s+')
+
+    let result = a:buffers
+    for needle in needles
+        call filter(result, printf('stridx(tolower(v:val.name), "%s") >= 0', escape(needle, '"')))
+    endfor
+
+    return result
 endfunction " }}}
 
 function! MakeChoicesString(buffers) " {{{

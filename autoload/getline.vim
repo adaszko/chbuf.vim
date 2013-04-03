@@ -5,10 +5,12 @@ set cpo&vim
 function! s:Echo(line) " {{{
     echon strpart(a:line, 0, &columns - 1)
 endfunction " }}}
+
 function! s:ClearLine(contents) " {{{
     let rubber = "\r" . repeat(' ', strlen(a:contents)) . "\r"
     call s:Echo(rubber)
 endfunction! " }}}
+
 function! s:WithoutLastWord(string) " {{{
     let result = substitute(a:string, '\v(\S+)\s+\S+$', '\1', '')
 
@@ -18,6 +20,7 @@ function! s:WithoutLastWord(string) " {{{
 
     return result
 endfunction " }}}
+
 function! getline#GetLine(prompt, get_status, default) " {{{
     let line = ""
     let [choice, status] = call(a:get_status, [line])

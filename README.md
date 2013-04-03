@@ -30,10 +30,10 @@ Just add a mapping of your choice to `.vimrc`:
 To Do
 =====
 
- * Spaces should indicate start of another pattern
- * Implement matching algorithm more suitable for buffer names
+ * Clean up occasional "Press ENTER of type command to continue" messages
+ * Make C-s, C-v and C-t open splits or tab respectively for selected buffer
  * Make functions script-private once they are sufficiently tested
- * Tiny screencast
+ * Tiny GIF screencast
 
 
 License
