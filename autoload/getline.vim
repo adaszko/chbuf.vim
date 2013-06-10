@@ -3,7 +3,8 @@ set cpo&vim
 
 
 function! s:Echo(line) " {{{
-    echon strpart(a:line, 0, &columns - 1)
+    " This 11 accounts for 'showcmd'.  Is there a way to calculate it?
+    echon strpart(a:line, 0, &columns - 11)
 endfunction " }}}
 
 function! s:ClearLine(contents) " {{{
