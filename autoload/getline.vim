@@ -39,7 +39,11 @@ function! getline#GetLine(prompt, get_status, default) " {{{
 
         if type(c) == type(0)
             if c == 13 " <Enter>
-                break
+                if len(choice) == 0
+                    continue
+                else
+                    break
+                endif
             elseif c == 21 " <C-U>
                 let line = ""
             elseif c == 23 " <C-W>

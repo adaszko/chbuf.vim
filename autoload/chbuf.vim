@@ -24,12 +24,8 @@ function! BufferFromNumber(number, name, score) " {{{
     return {'number': a:number, 'name': a:name, 'score': a:score, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
 endfunction " }}}
 
-function! Nop() dict " {{{
-
-endfunction " }}}
-
 function! DummyBuffer() " {{{
-    return {'switch': function('Nop')}
+    return {}
 endfunction " }}}
 
 function! SwitchToPath() dict " {{{
@@ -133,7 +129,9 @@ endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
     let buffer = PromptBuffer()
-    call buffer.switch()
+    if has_key(buffer, 'switch')
+        call buffer.switch()
+    endif
 endfunction " }}}
 
 
