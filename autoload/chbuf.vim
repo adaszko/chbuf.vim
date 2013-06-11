@@ -20,8 +20,8 @@ function! SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
-function! BufferFromNumber(number, name, score) " {{{
-    return {'number': a:number, 'name': a:name, 'score': a:score, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
+function! BufferFromNumber(number, name) " {{{
+    return {'number': a:number, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
 endfunction " }}}
 
 function! DummyBuffer() " {{{
@@ -32,12 +32,12 @@ function! SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
-function! BufferFromPath(path, score) " {{{
+function! BufferFromPath(path) " {{{
     let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'score': a:score, 'switch': function('SwitchToPath')}
+    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath')}
 endfunction " }}}
 
-function! ScoredBuffers() " {{{
+function! GetBuffers() " {{{
     let result = []
 
     for buffer in range(1, bufnr('$'))
@@ -55,44 +55,19 @@ function! ScoredBuffers() " {{{
             continue
         endif
 
-        if buffer == bufnr('#')
-            let score += 10000
-        endif
-
         let name = bufname(buffer)
 
         if name == ''
             continue
         endif
 
-        call add(result, BufferFromNumber(buffer, name, score))
+        call add(result, BufferFromNumber(buffer, name))
     endfor
 
-    for path in v:oldfiles
-        let score = 0
-
-        if !filereadable(path)
-            let score -= 100
-        endif
-
-        call add(result, BufferFromPath(path, score))
-    endfor
+    let oldfiles = map(copy(v:oldfiles), 'BufferFromPath(v:val)')
+    call extend(result, oldfiles)
 
     return result
-endfunction " }}}
-
-function! CompareScores(left, right) " {{{
-    if a:left.score > a:right.score
-        return -1
-    elseif a:left.score == a:right.score
-        return 0
-    else
-        return 1
-    endif
-endfunction " }}}
-
-function! GetSortedBuffers() " {{{
-    return sort(ScoredBuffers(), 'CompareScores')
 endfunction " }}}
 
 function! FilterBuffersMatching(input, buffers) " {{{
@@ -114,7 +89,7 @@ function! MakeChoicesString(buffers) " {{{
 endfunction " }}}
 
 function! BufferNameCallback(input) " {{{
-    let buffers = FilterBuffersMatching(a:input, GetSortedBuffers())
+    let buffers = FilterBuffersMatching(a:input, GetBuffers())
 
     if len(buffers) == 0
         return [DummyBuffer(), '']
