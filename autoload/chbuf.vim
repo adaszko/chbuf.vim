@@ -21,7 +21,8 @@ function! SwitchToNumber() dict " {{{
 endfunction " }}}
 
 function! BufferFromNumber(number, name) " {{{
-    return {'number': a:number, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
+    let path = expand('%:p:h')
+    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
 endfunction " }}}
 
 function! DummyBuffer() " {{{
@@ -39,6 +40,9 @@ endfunction " }}}
 
 function! GetBuffers() " {{{
     let result = []
+
+    let oldfiles = map(copy(v:oldfiles), 'BufferFromPath(v:val)')
+    call extend(result, oldfiles)
 
     for buffer in range(1, bufnr('$'))
         let score = 0
@@ -64,10 +68,18 @@ function! GetBuffers() " {{{
         call add(result, BufferFromNumber(buffer, name))
     endfor
 
-    let oldfiles = map(copy(v:oldfiles), 'BufferFromPath(v:val)')
-    call extend(result, oldfiles)
-
     return result
+endfunction " }}}
+
+function! GetUniqueBuffers() " {{{
+    let buffers = GetBuffers()
+
+    let unique = {}
+    for buf in buffers
+        let unique[buf['path']] = buf
+    endfor
+
+    return values(unique)
 endfunction " }}}
 
 function! FilterBuffersMatching(input, buffers) " {{{
@@ -76,7 +88,7 @@ function! FilterBuffersMatching(input, buffers) " {{{
 
     let result = a:buffers
     for needle in needles
-        call filter(result, printf('stridx(tolower(v:val.name), "%s") >= 0', escape(needle, '"')))
+        call filter(result, printf('stridx(tolower(v:val.path), "%s") >= 0', escape(needle, '"')))
     endfor
 
     return result
@@ -89,7 +101,7 @@ function! MakeChoicesString(buffers) " {{{
 endfunction " }}}
 
 function! BufferNameCallback(input) " {{{
-    let buffers = FilterBuffersMatching(a:input, GetBuffers())
+    let buffers = FilterBuffersMatching(a:input, GetUniqueBuffers())
 
     if len(buffers) == 0
         return [DummyBuffer(), '']
