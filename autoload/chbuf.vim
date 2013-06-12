@@ -88,7 +88,7 @@ function! FilterBuffersMatching(input, buffers) " {{{
 
     let result = a:buffers
     for needle in needles
-        call filter(result, printf('stridx(tolower(v:val.path), "%s") >= 0', escape(needle, '"')))
+        call filter(result, printf('stridx(tolower(v:val.path), "%s") >= 0', escape(needle, '\\"')))
     endfor
 
     return result
