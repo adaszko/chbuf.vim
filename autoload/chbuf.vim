@@ -137,13 +137,17 @@ function! ShortestUniqueSuffixes() " {{{
 endfunction " }}}
 
 function! FilterBuffersMatching(input, buffers) " {{{
-    let input = tolower(a:input)
-    let needles = split(input, '\v\s+')
-
     let result = a:buffers
-    for needle in needles
-        call filter(result, printf('stridx(tolower(v:val.suffix), "%s") >= 0', escape(needle, '\\"')))
-    endfor
+
+    if &ignorecase
+        for needle in split(tolower(a:input), '\v\s+')
+            call filter(result, printf('stridx(tolower(v:val.suffix), "%s") >= 0', escape(needle, '\\"')))
+        endfor
+    else
+        for needle in split(a:input, '\v\s+')
+            call filter(result, printf('stridx(v:val.suffix, "%s") >= 0', escape(needle, '\\"')))
+        endfor
+    endif
 
     return result
 endfunction " }}}

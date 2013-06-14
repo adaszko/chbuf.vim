@@ -1,7 +1,7 @@
 # What is it?
 
 An interactive way of jumping to buffers and recently edited files.  Recent
-files list is obtained via `v:oldfiles` variable (see help).
+files list is obtained via `v:oldfiles` variable (see `:help v:oldfiles`).
 
 # Status
 
@@ -22,7 +22,6 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 
 # To Do
 
- * Matching should respect &ignorecase
  * Make C-s, C-v and C-t open splits or tab respectively for selected buffer
  * Allow only S-Enter when file is no longer readable
  * Make functions script-private once they are sufficiently tested
