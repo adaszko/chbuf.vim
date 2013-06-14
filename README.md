@@ -5,7 +5,7 @@ files list is obtained via `v:oldfiles` variable (see `:help v:oldfiles`).
 
 # Status
 
-Should work on Mac OS X, Linux, Windows.  If it isn't, it's a bug.
+Should work on Mac OS X, Linux and Windows.  If it isn't, it's a bug.
 
 # Installation
 

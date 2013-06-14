@@ -109,6 +109,10 @@ function! SetUniqueSuffixes(node, cand, accum) " {{{
     endfor
 endfunction " }}}
 
+function! BySuffixLen(left, right) " {{{
+    return strlen(a:left.suffix) - strlen(a:right.suffix)
+endfunction " }}}
+
 function! ShortestUniqueSuffixes() " {{{
     let buffers = GetUniqueBuffers()
 
@@ -132,7 +136,7 @@ function! ShortestUniqueSuffixes() " {{{
     endfor
 
     call SetUniqueSuffixes(trie, [], [])
-
+    call sort(buffers, 'BySuffixLen')
     return buffers
 endfunction " }}}
 
