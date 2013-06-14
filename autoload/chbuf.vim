@@ -82,26 +82,80 @@ function! GetUniqueBuffers() " {{{
     return values(unique)
 endfunction " }}}
 
+function! SetUniqueSuffixes(node, cand, accum) " {{{
+    let children = keys(a:node)
+
+    let cand = copy(a:cand)
+    let accum = copy(a:accum)
+
+    if len(children) > 1
+        call extend(cand, accum)
+        let accum = []
+    endif
+
+    for seg in children
+        let val = a:node[seg]
+        if type(val) == type([])
+            let buf = val[0]
+            let buf['suffix'] = join(reverse(cand), s:directory_separator)
+        elseif len(children) == 1
+            call add(accum, seg)
+            call SetUniqueSuffixes(val, cand, accum)
+        else
+            call add(cand, seg)
+            call SetUniqueSuffixes(val, cand, accum)
+            call remove(cand, -1)
+        endif
+    endfor
+endfunction " }}}
+
+function! ShortestUniqueSuffixes() " {{{
+    let buffers = GetUniqueBuffers()
+
+    let trie = {}
+    for buf in buffers
+        " Special case for e.g. fugitive-like paths with multiple adjacent separators
+        let sep = printf('\V%s\+', s:directory_separator)
+        let segments = reverse(split(buf['path'], sep))
+
+        " ASSUMPTION: None of the segments list is a prefix of another
+        let node = trie
+        for i in range(len(segments)-1)
+            let seg = segments[i]
+            if !has_key(node, seg)
+                let node[seg] = {}
+            endif
+            let node = node[seg]
+        endfor
+        let seg = segments[-1]
+        let node[seg] = [buf]
+    endfor
+
+    call SetUniqueSuffixes(trie, [], [])
+
+    return buffers
+endfunction " }}}
+
 function! FilterBuffersMatching(input, buffers) " {{{
     let input = tolower(a:input)
     let needles = split(input, '\v\s+')
 
     let result = a:buffers
     for needle in needles
-        call filter(result, printf('stridx(tolower(v:val.path), "%s") >= 0', escape(needle, '\\"')))
+        call filter(result, printf('stridx(tolower(v:val.suffix), "%s") >= 0', escape(needle, '\\"')))
     endfor
 
     return result
 endfunction " }}}
 
 function! MakeChoicesString(buffers) " {{{
-    let names = map(copy(a:buffers), 'v:val.name')
+    let names = map(copy(a:buffers), 'v:val.suffix')
     let choices = s:choices_string . join(names)
     return choices
 endfunction " }}}
 
 function! BufferNameCallback(input) " {{{
-    let buffers = FilterBuffersMatching(a:input, GetUniqueBuffers())
+    let buffers = FilterBuffersMatching(a:input, ShortestUniqueSuffixes())
 
     if len(buffers) == 0
         return [DummyBuffer(), '']
