@@ -22,7 +22,7 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 
 # To Do
 
- * Make C-s, C-v and C-t open splits or tab respectively for selected buffer
+ * Introduce a variable that specifies ignored patterns
  * Allow only S-Enter when file is no longer readable
  * Make functions script-private once they are sufficiently tested
  * Documentation

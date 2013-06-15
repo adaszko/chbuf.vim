@@ -177,8 +177,25 @@ function! PromptBuffer() " {{{
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
-    let buffer = PromptBuffer()
-    if has_key(buffer, 'switch')
+    let [buffer, method] = PromptBuffer()
+
+    if !has_key(buffer, 'switch')
+        " DummyBuffer
+        return
+    endif
+
+    if method == '<Esc>'
+        return
+    elseif method == '<CR>'
+        call buffer.switch()
+    elseif method == '<C-T>'
+        execute 'tabnew'
+        call buffer.switch()
+    elseif method == '<C-S>'
+        execute 'split'
+        call buffer.switch()
+    elseif method == '<C-V>'
+        execute 'vsplit'
         call buffer.switch()
     endif
 endfunction " }}}

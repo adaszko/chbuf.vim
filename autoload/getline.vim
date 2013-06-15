@@ -37,7 +37,7 @@ function! getline#GetLine(prompt, get_status, default) " {{{
         let c = getchar()
         if c == 27 " <Esc>
             call s:ClearLine(displayed)
-            return a:default
+            return [a:default, '<Esc>']
         endif
 
         if type(c) == type(0)
@@ -45,12 +45,22 @@ function! getline#GetLine(prompt, get_status, default) " {{{
                 if len(choice) == 0
                     continue
                 else
-                    break
+                    call s:ClearLine(displayed)
+                    return [choice, '<CR>']
                 endif
             elseif c == 21 " <C-U>
                 let line = ""
             elseif c == 23 " <C-W>
                 let line = s:WithoutLastWord(line)
+            elseif c == 19 " <C-s>
+                call s:ClearLine(displayed)
+                return [choice, '<C-S>']
+            elseif c == 20 " <C-t>
+                call s:ClearLine(displayed)
+                return [choice, '<C-T>']
+            elseif c == 22 " <C-v>
+                call s:ClearLine(displayed)
+                return [choice, '<C-V>']
             else
                 let line .= nr2char(c)
             endif
@@ -59,7 +69,7 @@ function! getline#GetLine(prompt, get_status, default) " {{{
                 " Remove last character of input
                 if empty(line)
                     call s:ClearLine(displayed)
-                    return a:default
+                    return [a:default, '<BS>']
                 else
                     let line = strpart(line, 0, strlen(line)-1)
                 endif
@@ -72,9 +82,6 @@ function! getline#GetLine(prompt, get_status, default) " {{{
         call s:Echo("\r" . displayed)
         call s:Echo("\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line)))
     endwhile
-
-    call s:ClearLine(displayed)
-    return choice
 endfunction " }}}
 
 
