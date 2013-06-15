@@ -25,6 +25,10 @@ function! s:WithoutLastWord(string) " {{{
     return result
 endfunction " }}}
 
+function! s:CanReturn(choice) " {{{
+    return len(a:choice)
+endfunction " }}}
+
 function! getline#GetLine(prompt, get_status, default) " {{{
     let line = ""
     let [choice, status] = call(a:get_status, [line])
@@ -42,9 +46,7 @@ function! getline#GetLine(prompt, get_status, default) " {{{
 
         if type(c) == type(0)
             if c == 13 " <Enter>
-                if len(choice) == 0
-                    continue
-                else
+                if s:CanReturn(choice)
                     call s:ClearLine(displayed)
                     return [choice, '<CR>']
                 endif
@@ -52,15 +54,27 @@ function! getline#GetLine(prompt, get_status, default) " {{{
                 let line = ""
             elseif c == 23 " <C-W>
                 let line = s:WithoutLastWord(line)
+            elseif c == 1 " <C-a>
+                continue
+            elseif c == 4 " <C-d>
+                continue
+            elseif c == 5 " <C-e>
+                continue
             elseif c == 19 " <C-s>
-                call s:ClearLine(displayed)
-                return [choice, '<C-S>']
+                if s:CanReturn(choice)
+                    call s:ClearLine(displayed)
+                    return [choice, '<C-S>']
+                endif
             elseif c == 20 " <C-t>
-                call s:ClearLine(displayed)
-                return [choice, '<C-T>']
+                if s:CanReturn(choice)
+                    call s:ClearLine(displayed)
+                    return [choice, '<C-T>']
+                endif
             elseif c == 22 " <C-v>
-                call s:ClearLine(displayed)
-                return [choice, '<C-V>']
+                if s:CanReturn(choice)
+                    call s:ClearLine(displayed)
+                    return [choice, '<C-V>']
+                endif
             else
                 let line .= nr2char(c)
             endif
