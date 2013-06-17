@@ -23,7 +23,6 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 # To Do
 
  * Introduce a variable that specifies ignored patterns
- * Allow only S-Enter when file is no longer readable
  * Make functions script-private once they are sufficiently tested
  * Documentation
  * Move getline.vim into separate repository

@@ -25,9 +25,13 @@ function! SwitchToNumberLCD() dict " {{{
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
+function! NumberSelectable() dict " {{{
+    return 1
+endfunction " }}}
+
 function! BufferFromNumber(number, name) " {{{
     let path = expand('%:p:h')
-    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber'), 'switchlcd': function('SwitchToNumberLCD')}
+    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber'), 'switchlcd': function('SwitchToNumberLCD'), 'selectable': function('NumberSelectable')}
 endfunction " }}}
 
 function! DummyBuffer() " {{{
@@ -43,9 +47,13 @@ function! SwitchToPathLCD() dict " {{{
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
+function! PathSelectable() dict " {{{
+    return filereadable(expand(self.path))
+endfunction " }}}
+
 function! BufferFromPath(path) " {{{
     let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath'), 'switchlcd': function('SwitchToPathLCD')}
+    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath'), 'switchlcd': function('SwitchToPathLCD'), 'selectable': function('PathSelectable')}
 endfunction " }}}
 
 function! GetBuffers() " {{{
@@ -197,6 +205,8 @@ function! chbuf#SwitchBuffer() " {{{
     if method == '<Esc>'
         return
     elseif method == '<CR>'
+        call buffer.switch()
+    elseif method == '<S-CR>'
         call buffer.switch()
     elseif method == '<Tab>'
         call buffer.switchlcd()

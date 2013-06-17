@@ -25,8 +25,16 @@ function! s:WithoutLastWord(string) " {{{
     return result
 endfunction " }}}
 
-function! s:CanReturn(choice) " {{{
+function! s:CanOverrideReturn(choice) " {{{
     return len(a:choice)
+endfunction " }}}
+
+function! s:CanReturn(choice) " {{{
+    if type(a:choice) == type({}) && has_key(a:choice, 'selectable')
+        return a:choice.selectable()
+    endif
+
+    return s:CanOverrideReturn(a:choice)
 endfunction " }}}
 
 function! getline#GetLine(prompt, get_status, default) " {{{
@@ -91,6 +99,11 @@ function! getline#GetLine(prompt, get_status, default) " {{{
                     return [a:default, '<BS>']
                 else
                     let line = strpart(line, 0, strlen(line)-1)
+                endif
+            elseif c == "\x80\xfc\x02\x0d" " <S-CR>
+                if s:CanOverrideReturn(choice)
+                    call s:ClearLine(displayed)
+                    return [choice, '<S-CR>']
                 endif
             endif
         endif
