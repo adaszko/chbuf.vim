@@ -60,6 +60,11 @@ function! getline#GetLine(prompt, get_status, default) " {{{
                 continue
             elseif c == 5 " <C-e>
                 continue
+            elseif c == 9
+                if s:CanReturn(choice)
+                    call s:ClearLine(displayed)
+                    return [choice, '<Tab>']
+                endif
             elseif c == 19 " <C-s>
                 if s:CanReturn(choice)
                     call s:ClearLine(displayed)

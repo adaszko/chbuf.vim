@@ -20,9 +20,14 @@ function! SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
+function! SwitchToNumberLCD() dict " {{{
+    execute 'silent' 'buffer' self.number
+    execute 'lcd' expand("%:h")
+endfunction " }}}
+
 function! BufferFromNumber(number, name) " {{{
     let path = expand('%:p:h')
-    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber')}
+    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber'), 'switchlcd': function('SwitchToNumberLCD')}
 endfunction " }}}
 
 function! DummyBuffer() " {{{
@@ -33,9 +38,14 @@ function! SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
+function! SwitchToPathLCD() dict " {{{
+    execute 'silent' 'edit' self.path
+    execute 'lcd' expand("%:h")
+endfunction " }}}
+
 function! BufferFromPath(path) " {{{
     let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath')}
+    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath'), 'switchlcd': function('SwitchToPathLCD')}
 endfunction " }}}
 
 function! GetBuffers() " {{{
@@ -188,6 +198,8 @@ function! chbuf#SwitchBuffer() " {{{
         return
     elseif method == '<CR>'
         call buffer.switch()
+    elseif method == '<Tab>'
+        call buffer.switchlcd()
     elseif method == '<C-T>'
         execute 'tabnew'
         call buffer.switch()
