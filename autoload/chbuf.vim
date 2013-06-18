@@ -190,8 +190,9 @@ endfunction " }}}
 
 function! PromptBuffer() " {{{
     let w:chbuf_cache = ShortestUniqueSuffixes()
-    return getline#GetLine(s:prompt_string, 'BufferNameCallback', DummyBuffer())
+    let result = getline#GetLine(s:prompt_string, 'BufferNameCallback', DummyBuffer())
     unlet w:chbuf_cache
+    return result
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
