@@ -181,7 +181,7 @@ function! MakeChoicesString(buffers) " {{{
 endfunction " }}}
 
 function! BufferNameCallback(input) " {{{
-    let buffers = FilterBuffersMatching(a:input, ShortestUniqueSuffixes())
+    let buffers = FilterBuffersMatching(a:input, copy(w:chbuf_cache))
 
     if len(buffers) == 0
         return [DummyBuffer(), '']
@@ -191,7 +191,9 @@ function! BufferNameCallback(input) " {{{
 endfunction " }}}
 
 function! PromptBuffer() " {{{
+    let w:chbuf_cache = ShortestUniqueSuffixes()
     return getline#GetLine(s:prompt_string, 'BufferNameCallback', DummyBuffer())
+    unlet w:chbuf_cache
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
