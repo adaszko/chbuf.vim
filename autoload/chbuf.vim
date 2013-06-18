@@ -86,14 +86,8 @@ function! GetBuffers() " {{{
         call add(result, BufferFromNumber(buffer, name))
     endfor
 
-    return result
-endfunction " }}}
-
-function! GetUniqueBuffers() " {{{
-    let buffers = GetBuffers()
-
     let unique = {}
-    for buf in buffers
+    for buf in result
         let unique[buf['path']] = buf
     endfor
 
@@ -132,7 +126,7 @@ function! BySuffixLen(left, right) " {{{
 endfunction " }}}
 
 function! ShortestUniqueSuffixes() " {{{
-    let buffers = GetUniqueBuffers()
+    let buffers = GetBuffers()
 
     let trie = {}
     for buf in buffers
