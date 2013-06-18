@@ -16,50 +16,50 @@ else
     let s:choices_string = ' => '
 endif
 
-function! SwitchToNumber() dict " {{{
+function! chbuf#SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
-function! SwitchToNumberLCD() dict " {{{
+function! chbuf#SwitchToNumberLCD() dict " {{{
     execute 'silent' 'buffer' self.number
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! NumberSelectable() dict " {{{
+function! chbuf#NumberSelectable() dict " {{{
     return 1
 endfunction " }}}
 
-function! BufferFromNumber(number, name) " {{{
+function! s:BufferFromNumber(number, name) " {{{
     let path = expand('%:p:h')
-    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('SwitchToNumber'), 'switchlcd': function('SwitchToNumberLCD'), 'selectable': function('NumberSelectable')}
+    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'selectable': function('chbuf#NumberSelectable')}
 endfunction " }}}
 
-function! DummyBuffer() " {{{
+function! s:DummyBuffer() " {{{
     return {}
 endfunction " }}}
 
-function! SwitchToPath() dict " {{{
+function! chbuf#SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
-function! SwitchToPathLCD() dict " {{{
+function! chbuf#SwitchToPathLCD() dict " {{{
     execute 'silent' 'edit' self.path
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! PathSelectable() dict " {{{
+function! chbuf#PathSelectable() dict " {{{
     return filereadable(expand(self.path))
 endfunction " }}}
 
-function! BufferFromPath(path) " {{{
+function! s:BufferFromPath(path) " {{{
     let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'switch': function('SwitchToPath'), 'switchlcd': function('SwitchToPathLCD'), 'selectable': function('PathSelectable')}
+    return {'path': a:path, 'name': name, 'switch': function('chbuf#SwitchToPath'), 'switchlcd': function('chbuf#SwitchToPathLCD'), 'selectable': function('chbuf#PathSelectable')}
 endfunction " }}}
 
-function! GetBuffers() " {{{
+function! s:GetBuffers() " {{{
     let result = []
 
-    let oldfiles = map(copy(v:oldfiles), 'BufferFromPath(v:val)')
+    let oldfiles = map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
     call extend(result, oldfiles)
 
     for buffer in range(1, bufnr('$'))
@@ -83,7 +83,7 @@ function! GetBuffers() " {{{
             continue
         endif
 
-        call add(result, BufferFromNumber(buffer, name))
+        call add(result, s:BufferFromNumber(buffer, name))
     endfor
 
     let unique = {}
@@ -94,7 +94,7 @@ function! GetBuffers() " {{{
     return values(unique)
 endfunction " }}}
 
-function! SetUniqueSuffixes(node, cand, accum) " {{{
+function! s:SetUniqueSuffixes(node, cand, accum) " {{{
     let children = keys(a:node)
 
     let cand = copy(a:cand)
@@ -112,21 +112,21 @@ function! SetUniqueSuffixes(node, cand, accum) " {{{
             let buf['suffix'] = join(reverse(cand), s:directory_separator)
         elseif len(children) == 1
             call add(accum, seg)
-            call SetUniqueSuffixes(val, cand, accum)
+            call s:SetUniqueSuffixes(val, cand, accum)
         else
             call add(cand, seg)
-            call SetUniqueSuffixes(val, cand, accum)
+            call s:SetUniqueSuffixes(val, cand, accum)
             call remove(cand, -1)
         endif
     endfor
 endfunction " }}}
 
-function! BySuffixLen(left, right) " {{{
+function! s:BySuffixLen(left, right) " {{{
     return strlen(a:left.suffix) - strlen(a:right.suffix)
 endfunction " }}}
 
-function! ShortestUniqueSuffixes() " {{{
-    let buffers = GetBuffers()
+function! s:ShortestUniqueSuffixes() " {{{
+    let buffers = s:GetBuffers()
 
     let trie = {}
     for buf in buffers
@@ -147,12 +147,12 @@ function! ShortestUniqueSuffixes() " {{{
         let node[seg] = [buf]
     endfor
 
-    call SetUniqueSuffixes(trie, [], [])
-    call sort(buffers, 'BySuffixLen')
+    call s:SetUniqueSuffixes(trie, [], [])
+    call sort(buffers, 's:BySuffixLen')
     return buffers
 endfunction " }}}
 
-function! FilterBuffersMatching(input, buffers) " {{{
+function! s:FilterBuffersMatching(input, buffers) " {{{
     let result = a:buffers
 
     if exists('g:chbuf_ignore_pattern')
@@ -172,31 +172,31 @@ function! FilterBuffersMatching(input, buffers) " {{{
     return result
 endfunction " }}}
 
-function! MakeChoicesString(buffers) " {{{
+function! s:MakeChoicesString(buffers) " {{{
     let names = map(copy(a:buffers), 'v:val.suffix')
     let choices = s:choices_string . join(names)
     return choices
 endfunction " }}}
 
-function! BufferNameCallback(input) " {{{
-    let buffers = FilterBuffersMatching(a:input, copy(w:chbuf_cache))
+function! chbuf#GetLineCallback(input) " {{{
+    let buffers = s:FilterBuffersMatching(a:input, copy(w:chbuf_cache))
 
     if len(buffers) == 0
-        return [DummyBuffer(), '']
+        return [s:DummyBuffer(), '']
     endif
 
-    return [buffers[0], MakeChoicesString(buffers)]
+    return [buffers[0], s:MakeChoicesString(buffers)]
 endfunction " }}}
 
-function! PromptBuffer() " {{{
-    let w:chbuf_cache = ShortestUniqueSuffixes()
-    let result = getline#GetLine(s:prompt_string, 'BufferNameCallback', DummyBuffer())
+function! s:PromptBuffer() " {{{
+    let w:chbuf_cache = s:ShortestUniqueSuffixes()
+    let result = getline#GetLine(s:prompt_string, 'chbuf#GetLineCallback', s:DummyBuffer())
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
-    let [buffer, method] = PromptBuffer()
+    let [buffer, method] = s:PromptBuffer()
 
     if !has_key(buffer, 'switch')
         " DummyBuffer
