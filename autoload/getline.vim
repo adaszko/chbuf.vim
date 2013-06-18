@@ -3,11 +3,11 @@ set cpo&vim
 
 
 " This accounts for 'showcmd'.  Is there a way to calculate it?
-let g:chbuf_cmdwidth_fixup = 15
+let g:getline_cmdwidth_fixup = 15
 
 
 function! s:Echo(line) " {{{
-    echon strpart(a:line, 0, &columns - g:chbuf_cmdwidth_fixup)
+    echon strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
 endfunction " }}}
 
 function! s:ClearLine(contents) " {{{

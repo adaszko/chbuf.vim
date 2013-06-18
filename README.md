@@ -23,7 +23,7 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 # To Do
 
  * Documentation
- * Move getline.vim into separate repository
+ * Decouple getline.vim into a separate project
  * Tiny GIF screencast
 
 # License
