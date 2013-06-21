@@ -8,14 +8,6 @@ else
     let s:directory_separator = '\\'
 endif
 
-if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
-    let s:prompt_string = '∷ '
-    let s:choices_string = ' ↦ '
-else
-    let s:prompt_string = ':: '
-    let s:choices_string = ' => '
-endif
-
 function! chbuf#SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
@@ -25,13 +17,13 @@ function! chbuf#SwitchToNumberLCD() dict " {{{
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! chbuf#NumberSelectable() dict " {{{
+function! chbuf#NumberChoosable() dict " {{{
     return 1
 endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
     let path = expand('%:p:h')
-    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'selectable': function('chbuf#NumberSelectable')}
+    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'IsChoosable': function('chbuf#NumberChoosable')}
 endfunction " }}}
 
 function! s:DummyBuffer() " {{{
@@ -47,13 +39,13 @@ function! chbuf#SwitchToPathLCD() dict " {{{
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! chbuf#PathSelectable() dict " {{{
+function! chbuf#PathChoosable() dict " {{{
     return filereadable(expand(self.path))
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
     let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'switch': function('chbuf#SwitchToPath'), 'switchlcd': function('chbuf#SwitchToPathLCD'), 'selectable': function('chbuf#PathSelectable')}
+    return {'path': a:path, 'name': name, 'switch': function('chbuf#SwitchToPath'), 'switchlcd': function('chbuf#SwitchToPathLCD'), 'IsChoosable': function('chbuf#PathChoosable')}
 endfunction " }}}
 
 function! s:GetBuffers() " {{{
@@ -172,40 +164,35 @@ function! s:FilterBuffersMatching(input, buffers) " {{{
     return result
 endfunction " }}}
 
-function! s:MakeChoicesString(buffers) " {{{
-    let names = map(copy(a:buffers), 'v:val.suffix')
-    let choices = s:choices_string . join(names)
-    return choices
+function! s:RenderChoices(buffers) " {{{
+    return join(map(copy(a:buffers), 'v:val.suffix'))
 endfunction " }}}
 
 function! chbuf#GetLineCallback(input) " {{{
-    let buffers = s:FilterBuffersMatching(a:input, copy(w:chbuf_cache))
+    let matching = s:FilterBuffersMatching(a:input, copy(w:chbuf_cache))
 
-    if len(buffers) == 0
-        return [s:DummyBuffer(), '']
+    if len(matching) == 0
+        return []
     endif
 
-    return [buffers[0], s:MakeChoicesString(buffers)]
+    return [matching[0], s:RenderChoices(matching)]
 endfunction " }}}
 
 function! s:PromptBuffer() " {{{
     let w:chbuf_cache = s:ShortestUniqueSuffixes()
-    let result = getline#GetLine(s:prompt_string, 'chbuf#GetLineCallback', s:DummyBuffer())
+    let result = getline#GetLine('chbuf#GetLineCallback')
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
 function! chbuf#SwitchBuffer() " {{{
-    let [buffer, method] = s:PromptBuffer()
-
-    if !has_key(buffer, 'switch')
-        " DummyBuffer
+    let choice = s:PromptBuffer()
+    if len(choice) == 0
         return
     endif
+    let [buffer, method] = choice
 
-    if method == '<Esc>'
-        return
-    elseif method == '<CR>'
+    if method == '<CR>'
         call buffer.switch()
     elseif method == '<S-CR>'
         call buffer.switch()

@@ -6,6 +6,15 @@ set cpo&vim
 let g:getline_cmdwidth_fixup = 15
 
 
+if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
+    let s:default_prompt_string = '∷ '
+    let s:default_separator_string = ' ↦ '
+else
+    let s:default_prompt_string = ':: '
+    let s:default_separator_string = ' => '
+endif
+
+
 function! s:Echo(line) " {{{
     echon strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
 endfunction " }}}
@@ -25,43 +34,60 @@ function! s:WithoutLastWord(string) " {{{
     return result
 endfunction " }}}
 
-function! s:CanOverrideReturn(choice) " {{{
-    return len(a:choice)
-endfunction " }}}
-
-function! s:CanReturn(choice) " {{{
-    if type(a:choice) == type({}) && has_key(a:choice, 'selectable')
-        return a:choice.selectable()
+function! s:InitialState(config) " {{{
+    let state = {}
+    let state.contents = ""
+    let candidates = a:config.GetChoicesFor(state.contents)
+    if len(candidates) == 0
+        return {}
     endif
 
-    return s:CanOverrideReturn(a:choice)
+    let [state.choice, state.possible] = candidates
+    return state
 endfunction " }}}
 
-function! getline#GetLine(prompt, get_status, default) " {{{
-    let line = ""
-    let [choice, status] = call(a:get_status, [line])
+function! s:StateTransition(state, config, newContents) " {{{
+    let candidates = a:config.GetChoicesFor(a:newContents)
+    if len(candidates) == 0
+        return a:state
+    endif
 
-    let displayed = a:prompt . line . status
+    let a:state.contents = a:newContents
+    let [a:state.choice, a:state.possible] = candidates
+    return a:state
+endfunction " }}}
+
+function! s:MakeDisplayed(config, state) " {{{
+    return a:config.prompt . a:state.contents . a:config.separator . a:state.possible
+endfunction " }}}
+
+function! s:GetLineCustom(config) " {{{
+    let state = s:InitialState(a:config)
+    if state == {}
+        return []
+    endif
+
+    let displayed = s:MakeDisplayed(a:config, state)
     call s:Echo(displayed)
-    call s:Echo("\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line)))
+    call s:Echo("\r" . strpart(displayed, 0, strlen(a:config.prompt) + strlen(state.contents)))
 
     while 1
         let c = getchar()
         if c == 27 " <Esc>
             call s:ClearLine(displayed)
-            return [a:default, '<Esc>']
+            return []
         endif
 
         if type(c) == type(0)
             if c == 13 " <Enter>
-                if s:CanReturn(choice)
+                if state.choice.IsChoosable()
                     call s:ClearLine(displayed)
-                    return [choice, '<CR>']
+                    return [state.choice, '<CR>']
                 endif
             elseif c == 21 " <C-U>
-                let line = ""
+                let state = s:StateTransition(state, a:config, "")
             elseif c == 23 " <C-W>
-                let line = s:WithoutLastWord(line)
+                let state = s:StateTransition(state, a:config, s:WithoutLastWord(state.contents))
             elseif c == 1 " <C-a>
                 continue
             elseif c == 4 " <C-d>
@@ -69,51 +95,56 @@ function! getline#GetLine(prompt, get_status, default) " {{{
             elseif c == 5 " <C-e>
                 continue
             elseif c == 9
-                if s:CanReturn(choice)
+                if state.choice.IsChoosable()
                     call s:ClearLine(displayed)
-                    return [choice, '<Tab>']
+                    return [state.choice, '<Tab>']
                 endif
             elseif c == 19 " <C-s>
-                if s:CanReturn(choice)
+                if state.choice.IsChoosable()
                     call s:ClearLine(displayed)
-                    return [choice, '<C-S>']
+                    return [state.choice, '<C-S>']
                 endif
             elseif c == 20 " <C-t>
-                if s:CanReturn(choice)
+                if state.choice.IsChoosable()
                     call s:ClearLine(displayed)
-                    return [choice, '<C-T>']
+                    return [state.choice, '<C-T>']
                 endif
             elseif c == 22 " <C-v>
-                if s:CanReturn(choice)
+                if state.choice.IsChoosable()
                     call s:ClearLine(displayed)
-                    return [choice, '<C-V>']
+                    return [state.choice, '<C-V>']
                 endif
             else
-                let line .= nr2char(c)
+                let newContents = state.contents . nr2char(c)
+                let state = s:StateTransition(state, a:config, newContents)
             endif
         elseif type(c) == type("")
             if c == "\x80kb" " <BS>
-                " Remove last character of input
-                if empty(line)
+                if empty(state.contents)
                     call s:ClearLine(displayed)
-                    return [a:default, '<BS>']
+                    return []
                 else
-                    let line = strpart(line, 0, strlen(line)-1)
-                endif
-            elseif c == "\x80\xfc\x02\x0d" " <S-CR>
-                if s:CanOverrideReturn(choice)
-                    call s:ClearLine(displayed)
-                    return [choice, '<S-CR>']
+                    let newContents = strpart(state.contents, 0, strlen(state.contents)-1)
+                    let state = s:StateTransition(state, a:config, newContents)
                 endif
             endif
         endif
 
         call s:ClearLine(displayed)
-        let [choice, status] = call(a:get_status, [line])
-        let displayed = a:prompt . line . status
+        let displayed = s:MakeDisplayed(a:config, state)
         call s:Echo("\r" . displayed)
-        call s:Echo("\r" . strpart(displayed, 0, strlen(a:prompt) + strlen(line)))
+        call s:Echo("\r" . strpart(displayed, 0, strlen(a:config.prompt) + strlen(state.contents)))
     endwhile
+endfunction " }}}
+
+function! getline#GetLine(GetChoicesCallback) " {{{
+    let config = {}
+
+    let config['prompt'] = s:default_prompt_string
+    let config['separator'] = s:default_separator_string
+    let config['GetChoicesFor'] = function(a:GetChoicesCallback)
+
+    return s:GetLineCustom(config)
 endfunction " }}}
 
 
