@@ -6,15 +6,6 @@ set cpo&vim
 let g:getline_cmdwidth_fixup = 15
 
 
-if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
-    let s:default_prompt_string = '∷ '
-    let s:default_separator_string = ' ↦ '
-else
-    let s:default_prompt_string = ':: '
-    let s:default_separator_string = ' => '
-endif
-
-
 function! s:Echo(line) " {{{
     echon strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
 endfunction " }}}
@@ -140,8 +131,14 @@ endfunction " }}}
 function! getline#GetLine(GetChoicesCallback) " {{{
     let config = {}
 
-    let config['prompt'] = s:default_prompt_string
-    let config['separator'] = s:default_separator_string
+    if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
+        let config['prompt'] = '∷ '
+        let config['separator'] = ' ↦ '
+    else
+        let config['prompt'] = ':: '
+        let config['separator'] = ' => '
+    endif
+
     let config['GetChoicesFor'] = function(a:GetChoicesCallback)
 
     return s:GetLineCustom(config)
