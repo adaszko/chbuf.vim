@@ -152,7 +152,7 @@ function! s:FilterBuffersMatching(input, buffers) " {{{
     let result = a:buffers
 
     if exists('g:chbuf_ignore_pattern')
-        call filter(result, 'v:val.suffix !~ "' . escape(g:chbuf_ignore_pattern, '"') . '"')
+        call filter(result, "v:val.path !~ '" . escape(g:chbuf_ignore_pattern, "'") . "'")
     endif
 
     if &ignorecase
