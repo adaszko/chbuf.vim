@@ -151,10 +151,6 @@ endfunction " }}}
 function! s:FilterBuffersMatching(input, buffers) " {{{
     let result = a:buffers
 
-    if exists('g:chbuf_ignore_pattern')
-        call filter(result, "v:val.path !~ '" . escape(g:chbuf_ignore_pattern, "'") . "'")
-    endif
-
     if &ignorecase
         for needle in split(tolower(a:input), '\v\s+')
             call filter(result, printf('stridx(tolower(v:val.suffix), "%s") >= 0', escape(needle, '\\"')))
@@ -166,6 +162,14 @@ function! s:FilterBuffersMatching(input, buffers) " {{{
     endif
 
     return result
+endfunction " }}}
+
+function! s:FilterIgnoredBuffers(buffers) " {{{
+    if exists('g:chbuf_ignore_pattern')
+        call filter(a:buffers, "v:val.path !~ '" . escape(g:chbuf_ignore_pattern, "'") . "'")
+    endif
+
+    return a:buffers
 endfunction " }}}
 
 function! s:RenderChoices(buffers) " {{{
@@ -183,7 +187,7 @@ function! chbuf#GetLineCallback(input) " {{{
 endfunction " }}}
 
 function! s:PromptBuffer() " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:GetBuffers())
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterIgnoredBuffers(s:GetBuffers()))
     let result = getline#GetLine('chbuf#GetLineCallback')
     unlet w:chbuf_cache
     return result
