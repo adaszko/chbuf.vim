@@ -172,8 +172,12 @@ function! s:FilterIgnoredBuffers(buffers) " {{{
     return a:buffers
 endfunction " }}}
 
-function! s:RenderChoices(buffers) " {{{
-    return join(map(copy(a:buffers), 'v:val.suffix'))
+function! s:RenderHint(buffers) " {{{
+    if len(a:buffers) == 1
+        return a:buffers[0].path
+    else
+        return join(map(copy(a:buffers), 'v:val.suffix'))
+    endif
 endfunction " }}}
 
 function! chbuf#GetLineCallback(input) " {{{
@@ -183,7 +187,7 @@ function! chbuf#GetLineCallback(input) " {{{
         return []
     endif
 
-    return [matching[0], s:RenderChoices(matching)]
+    return [matching[0], s:RenderHint(matching)]
 endfunction " }}}
 
 function! s:PromptBuffer() " {{{

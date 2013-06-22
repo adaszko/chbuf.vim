@@ -22,7 +22,6 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 
 # To Do
 
- * Provide more visual feedback to the user
  * Documentation
  * Decouple getline.vim into a separate project
  * Tiny GIF screencast
