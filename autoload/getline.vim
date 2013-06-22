@@ -11,7 +11,7 @@ function! s:Echo(line) " {{{
 endfunction " }}}
 
 function! s:ClearLine(contents) " {{{
-    let rubber = "\r" . repeat(' ', strlen(a:contents)) . "\r"
+    let rubber = "\r" . substitute(a:contents, '.', ' ', 'g') . "\r"
     call s:Echo(rubber)
 endfunction! " }}}
 
