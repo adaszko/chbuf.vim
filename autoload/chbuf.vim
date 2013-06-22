@@ -23,7 +23,7 @@ endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
     let path = expand('#' . a:number . ':p')
-    return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'IsChoosable': function('chbuf#NumberChoosable')}
+    return {'number': a:number, 'path': path, 'name': a:name, 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'IsChoosable': function('chbuf#NumberChoosable')}
 endfunction " }}}
 
 function! chbuf#SwitchToPath() dict " {{{
@@ -40,8 +40,7 @@ function! chbuf#PathChoosable() dict " {{{
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
-    let name = split(a:path, s:directory_separator)[-1]
-    return {'path': a:path, 'name': name, 'switch': function('chbuf#SwitchToPath'), 'switchlcd': function('chbuf#SwitchToPathLCD'), 'IsChoosable': function('chbuf#PathChoosable')}
+    return {'path': a:path, 'switch': function('chbuf#SwitchToPath'), 'switchlcd': function('chbuf#SwitchToPathLCD'), 'IsChoosable': function('chbuf#PathChoosable')}
 endfunction " }}}
 
 function! s:GetBuffers() " {{{
