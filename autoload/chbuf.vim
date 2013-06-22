@@ -190,8 +190,12 @@ function! chbuf#GetLineCallback(input) " {{{
     return [matching[0], s:RenderHint(matching)]
 endfunction " }}}
 
+function! s:FilterUnchoosable(buffers) " {{{
+    return filter(a:buffers, 'v:val.IsChoosable()')
+endfunction " }}}
+
 function! s:PromptBuffer() " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterIgnoredBuffers(s:GetBuffers()))
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:GetBuffers())))
     let result = getline#GetLine('chbuf#GetLineCallback')
     unlet w:chbuf_cache
     return result
@@ -205,8 +209,6 @@ function! chbuf#SwitchBuffer() " {{{
     let [buffer, method] = choice
 
     if method == '<CR>'
-        call buffer.switch()
-    elseif method == '<S-CR>'
         call buffer.switch()
     elseif method == '<Tab>'
         call buffer.switchlcd()
