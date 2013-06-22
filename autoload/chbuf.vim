@@ -22,7 +22,7 @@ function! chbuf#NumberChoosable() dict " {{{
 endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
-    let path = expand('%:p:h')
+    let path = expand('#' . a:number . ':p')
     return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'IsChoosable': function('chbuf#NumberChoosable')}
 endfunction " }}}
 
@@ -106,6 +106,7 @@ function! s:SetUniqueSuffixes(node, cand, accum) " {{{
             call s:SetUniqueSuffixes(val, cand, accum)
             call remove(cand, -1)
         endif
+        unlet val
     endfor
 endfunction " }}}
 
