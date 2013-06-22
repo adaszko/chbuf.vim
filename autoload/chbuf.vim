@@ -26,10 +26,6 @@ function! s:BufferFromNumber(number, name) " {{{
     return {'number': a:number, 'path': path, 'name': a:name, 'basename': split(a:name, s:directory_separator)[-1], 'switch': function('chbuf#SwitchToNumber'), 'switchlcd': function('chbuf#SwitchToNumberLCD'), 'IsChoosable': function('chbuf#NumberChoosable')}
 endfunction " }}}
 
-function! s:DummyBuffer() " {{{
-    return {}
-endfunction " }}}
-
 function! chbuf#SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
@@ -117,11 +113,9 @@ function! s:BySuffixLen(left, right) " {{{
     return strlen(a:left.suffix) - strlen(a:right.suffix)
 endfunction " }}}
 
-function! s:ShortestUniqueSuffixes() " {{{
-    let buffers = s:GetBuffers()
-
+function! s:ShortestUniqueSuffixes(buffers) " {{{
     let trie = {}
-    for buf in buffers
+    for buf in a:buffers
         " Special case for e.g. fugitive-like paths with multiple adjacent separators
         let sep = printf('\V%s\+', s:directory_separator)
         let segments = reverse(split(buf['path'], sep))
@@ -140,8 +134,8 @@ function! s:ShortestUniqueSuffixes() " {{{
     endfor
 
     call s:SetUniqueSuffixes(trie, [], [])
-    call sort(buffers, 's:BySuffixLen')
-    return buffers
+    call sort(a:buffers, 's:BySuffixLen')
+    return a:buffers
 endfunction " }}}
 
 function! s:FilterBuffersMatching(input, buffers) " {{{
@@ -179,7 +173,7 @@ function! chbuf#GetLineCallback(input) " {{{
 endfunction " }}}
 
 function! s:PromptBuffer() " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes()
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:GetBuffers())
     let result = getline#GetLine('chbuf#GetLineCallback')
     unlet w:chbuf_cache
     return result
