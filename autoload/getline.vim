@@ -6,14 +6,9 @@ set cpo&vim
 let g:getline_cmdwidth_fixup = 15
 
 
-function! s:Echo(line) " {{{
-    echon strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
+function! s:NumChars(s) " {{{
+    return strlen(substitute(a:s, '\v.', 'x', 'g'))
 endfunction " }}}
-
-function! s:ClearLine(contents) " {{{
-    let rubber = "\r" . substitute(a:contents, '.', ' ', 'g') . "\r"
-    call s:Echo(rubber)
-endfunction! " }}}
 
 function! s:WithoutLastWord(string) " {{{
     let result = substitute(a:string, '\v(\S+)\s+\S+$', '\1', '')
@@ -48,9 +43,23 @@ function! s:StateTransition(state, config, newContents) " {{{
     return a:state
 endfunction " }}}
 
-function! s:MakeDisplayed(config, state) " {{{
-    return a:config.prompt . a:state.contents . a:config.separator . a:state.possible
+function! s:ShowState(state, config) " {{{
+    let cmdwidth = &columns - g:getline_cmdwidth_fixup
+    let line = a:config.prompt . a:state.contents . a:config.separator . a:state.possible
+    if s:NumChars(line) <= cmdwidth
+        return line
+    else
+        return strpart(line, 0, cmdwidth - s:NumChars(a:config.continuation)) . a:config.continuation
+    endif
 endfunction " }}}
+
+function! s:ShowPromptContents(state, config) " {{{
+    return a:config.prompt . a:state.contents
+endfunction " }}}
+
+function! s:Rubber(displayed) " {{{
+    return "\r" . substitute(a:displayed, '.', ' ', 'g') . "\r"
+endfunction! " }}}
 
 function! s:WithoutLastChar(s) " {{{
     return substitute(a:s, '\v.$', '', '')
@@ -62,21 +71,20 @@ function! s:GetLineCustom(config) " {{{
         return []
     endif
 
-    let displayed = s:MakeDisplayed(a:config, state)
-    call s:Echo(displayed)
-    call s:Echo("\r" . strpart(displayed, 0, strlen(a:config.prompt) + strlen(state.contents)))
+    let displayed = s:ShowState(state, a:config)
+    echon displayed . "\r" . s:ShowPromptContents(state, a:config)
 
     while 1
         let c = getchar()
         if c == 27 " <Esc>
-            call s:ClearLine(displayed)
+            echon s:Rubber(displayed)
             return []
         endif
 
         if type(c) == type(0)
             if c == 13 " <Enter>
                 if state.choice.IsChoosable()
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return [state.choice, '<CR>']
                 endif
             elseif c == 21 " <C-U>
@@ -91,22 +99,22 @@ function! s:GetLineCustom(config) " {{{
                 continue
             elseif c == 9
                 if state.choice.IsChoosable()
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return [state.choice, '<Tab>']
                 endif
             elseif c == 19 " <C-s>
                 if state.choice.IsChoosable()
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return [state.choice, '<C-S>']
                 endif
             elseif c == 20 " <C-t>
                 if state.choice.IsChoosable()
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return [state.choice, '<C-T>']
                 endif
             elseif c == 22 " <C-v>
                 if state.choice.IsChoosable()
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return [state.choice, '<C-V>']
                 endif
             else
@@ -116,7 +124,7 @@ function! s:GetLineCustom(config) " {{{
         elseif type(c) == type("")
             if c == "\x80kb" " <BS>
                 if empty(state.contents)
-                    call s:ClearLine(displayed)
+                    echon s:Rubber(displayed)
                     return []
                 else
                     let state = s:StateTransition(state, a:config, s:WithoutLastChar(state.contents))
@@ -124,10 +132,9 @@ function! s:GetLineCustom(config) " {{{
             endif
         endif
 
-        call s:ClearLine(displayed)
-        let displayed = s:MakeDisplayed(a:config, state)
-        call s:Echo("\r" . displayed)
-        call s:Echo("\r" . strpart(displayed, 0, strlen(a:config.prompt) + strlen(state.contents)))
+        echon s:Rubber(displayed)
+        let displayed = s:ShowState(state, a:config)
+        echon displayed . "\r" . s:ShowPromptContents(state, a:config)
     endwhile
 endfunction " }}}
 
@@ -137,9 +144,11 @@ function! getline#GetLine(GetChoicesCallback) " {{{
     if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
         let config['prompt'] = '∷ '
         let config['separator'] = ' ↦ '
+        let config['continuation'] = '…'
     else
         let config['prompt'] = ':: '
         let config['separator'] = ' => '
+        let config['continuation'] = '...'
     endif
 
     let config['GetChoicesFor'] = function(a:GetChoicesCallback)
