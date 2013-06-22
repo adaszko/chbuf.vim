@@ -52,6 +52,10 @@ function! s:MakeDisplayed(config, state) " {{{
     return a:config.prompt . a:state.contents . a:config.separator . a:state.possible
 endfunction " }}}
 
+function! s:WithoutLastChar(s) " {{{
+    return substitute(a:s, '\v.$', '', '')
+endfunction " }}}
+
 function! s:GetLineCustom(config) " {{{
     let state = s:InitialState(a:config)
     if state == {}
@@ -115,8 +119,7 @@ function! s:GetLineCustom(config) " {{{
                     call s:ClearLine(displayed)
                     return []
                 else
-                    let newContents = strpart(state.contents, 0, strlen(state.contents)-1)
-                    let state = s:StateTransition(state, a:config, newContents)
+                    let state = s:StateTransition(state, a:config, s:WithoutLastChar(state.contents))
                 endif
             endif
         endif
