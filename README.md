@@ -1,7 +1,7 @@
 # What is it?
 
-An interactive way of jumping to buffers and recently edited files.  Recent
-files list is obtained via `v:oldfiles` variable (see `:help v:oldfiles`).
+An highly interactive way of jumping to buffers and recently edited files.
+Recent files list is obtained via `v:oldfiles` variable (see `:help v:oldfiles`).
 
 # Status
 
@@ -22,7 +22,7 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 
 # To Do
 
- * Documentation
+ * Write help file
  * Decouple getline.vim into a separate project
  * Tiny GIF screencast
 

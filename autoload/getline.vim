@@ -97,6 +97,13 @@ function! s:GetLineCustom(config) " {{{
                 continue
             elseif c == 5 " <C-e>
                 continue
+            elseif c == 8 " <C-h>
+                if empty(state.contents)
+                    echon s:Rubber(displayed)
+                    return []
+                else
+                    let state = s:StateTransition(state, a:config, s:WithoutLastChar(state.contents))
+                endif
             elseif c == 9
                 if state.choice.IsChoosable()
                     echon s:Rubber(displayed)

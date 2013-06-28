@@ -85,6 +85,10 @@ function! s:GetBuffers() " {{{
 
     let unique = {}
     for buf in result
+        if len(buf['path']) == 0
+            continue
+        endif
+
         let unique[buf['path']] = buf
     endfor
 
