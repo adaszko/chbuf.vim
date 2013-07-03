@@ -68,6 +68,7 @@ endfunction " }}}
 function! s:GetLineCustom(config) " {{{
     let state = s:InitialState(a:config)
     if state == {}
+        echon a:config.empty
         return []
     endif
 
@@ -152,10 +153,12 @@ function! getline#GetLine(GetChoicesCallback) " {{{
         let config['prompt'] = '∷ '
         let config['separator'] = ' ↦ '
         let config['continuation'] = '…'
+        let config['empty'] = '∅'
     else
         let config['prompt'] = ':: '
         let config['separator'] = ' => '
         let config['continuation'] = '...'
+        let config['empty'] = '{}'
     endif
 
     let config['GetChoicesFor'] = a:GetChoicesCallback
