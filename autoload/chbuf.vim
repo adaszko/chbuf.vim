@@ -55,11 +55,12 @@ function! s:BufferFromPath(path) " {{{
           \}
 endfunction " }}}
 
+function! s:GetOldFiles() " {{{
+    return map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
+endfunction " }}}
+
 function! s:GetBuffers() " {{{
     let result = []
-
-    let oldfiles = map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
-    call extend(result, oldfiles)
 
     for buffer in range(1, bufnr('$'))
         let score = 0
@@ -85,8 +86,13 @@ function! s:GetBuffers() " {{{
         call add(result, s:BufferFromNumber(buffer, name))
     endfor
 
+    return result
+endfunction " }}}
+
+function! s:UniqPaths(buffers) " {{{
     let unique = {}
-    for buf in result
+
+    for buf in a:buffers
         if len(buf['path']) == 0
             continue
         endif
@@ -205,7 +211,8 @@ function! s:SID() " {{{
 endfun " }}}
 
 function! s:PromptBuffer() " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:GetBuffers())))
+    let buffers = extend(s:GetBuffers(), s:GetOldFiles())
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:UniqPaths(buffers))))
     let result = getline#GetLine(function('<SNR>' . s:SID() . '_' . 'GetLineCallback'))
     unlet w:chbuf_cache
     return result
