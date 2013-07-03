@@ -158,7 +158,7 @@ function! getline#GetLine(GetChoicesCallback) " {{{
         let config['continuation'] = '...'
     endif
 
-    let config['GetChoicesFor'] = function(a:GetChoicesCallback)
+    let config['GetChoicesFor'] = a:GetChoicesCallback
 
     return s:GetLineCustom(config)
 endfunction " }}}

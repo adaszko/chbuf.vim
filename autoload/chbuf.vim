@@ -186,7 +186,7 @@ function! s:RenderHint(buffers) " {{{
     endif
 endfunction " }}}
 
-function! chbuf#GetLineCallback(input) " {{{
+function! s:GetLineCallback(input) " {{{
     let matching = s:FilterBuffersMatching(a:input, copy(w:chbuf_cache))
 
     if len(matching) == 0
@@ -200,9 +200,13 @@ function! s:FilterUnchoosable(buffers) " {{{
     return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
+function! s:SID() " {{{
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun " }}}
+
 function! s:PromptBuffer() " {{{
     let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:GetBuffers())))
-    let result = getline#GetLine('chbuf#GetLineCallback')
+    let result = getline#GetLine(function('<SNR>' . s:SID() . '_' . 'GetLineCallback'))
     unlet w:chbuf_cache
     return result
 endfunction " }}}
