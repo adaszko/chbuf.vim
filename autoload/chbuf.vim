@@ -1,4 +1,4 @@
-if exists('g:autoloaded_chbuf') || &compatible
+if exists('g:autoloaded_chbuf') || &compatible || v:version < 700
     finish
 endif
 

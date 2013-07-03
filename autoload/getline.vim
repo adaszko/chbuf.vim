@@ -1,10 +1,16 @@
+if exists('g:autoloaded_getline') || &compatible || v:version < 700
+    finish
+endif
+
+let g:autoloaded_getline = 1
+
+
 let s:save_cpo = &cpo
 set cpo&vim
 
 
 " This accounts for 'showcmd'.  Is there a way to calculate it?
 let g:getline_cmdwidth_fixup = 15
-
 
 function! s:NumChars(s) " {{{
     return strlen(substitute(a:s, '\v.', 'x', 'g'))
