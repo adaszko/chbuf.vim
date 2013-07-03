@@ -1,3 +1,9 @@
+if exists('g:autoloaded_chbuf') || &compatible
+    finish
+endif
+
+let g:autoloaded_chbuf = 1
+
 let s:save_cpo = &cpo
 set cpo&vim
 
