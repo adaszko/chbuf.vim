@@ -4,8 +4,10 @@ set cpo&vim
 
 if has('unix')
     let s:directory_separator = '/'
-else
+elseif has('win32')
     let s:directory_separator = '\\'
+else
+    echoerr "You're running chbuf plugin on an unsupported OS"
 endif
 
 function! chbuf#SwitchToNumber() dict " {{{
@@ -42,7 +44,7 @@ function! chbuf#SwitchToPathLCD() dict " {{{
 endfunction " }}}
 
 function! chbuf#PathChoosable() dict " {{{
-    return filereadable(expand(self.path))
+    return filereadable(self.path)
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
