@@ -57,6 +57,10 @@ function! s:ShowPromptContents(state, config) " {{{
     return a:config.prompt . a:state.contents
 endfunction " }}}
 
+function! s:Show(line) " {{{
+    return strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
+endfunction " }}}
+
 function! s:Rubber(displayed) " {{{
     return "\r" . substitute(a:displayed, '.', ' ', 'g') . "\r"
 endfunction! " }}}
@@ -68,7 +72,7 @@ endfunction " }}}
 function! s:GetLineCustom(config) " {{{
     let state = s:InitialState(a:config)
     if state == {}
-        echon a:config.empty
+        echon s:Show(a:config.empty)
         return []
     endif
 
@@ -92,6 +96,11 @@ function! s:GetLineCustom(config) " {{{
                 let state = s:StateTransition(state, a:config, "")
             elseif c == 23 " <C-W>
                 let state = s:StateTransition(state, a:config, s:WithoutLastWord(state.contents))
+            elseif c == 25 " <C-Y>
+                call setreg(v:register, state.choice.path)
+                echon s:Rubber(displayed)
+                echon s:Show(a:config.separator . state.choice.path)
+                return []
             elseif c == 1 " <C-a>
                 continue
             elseif c == 4 " <C-d>
