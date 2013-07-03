@@ -8,13 +8,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
-if has('unix')
-    let s:directory_separator = '/'
-elseif has('win32')
-    let s:directory_separator = '\\'
-else
-    echoerr "You're running chbuf plugin on an unsupported OS"
-endif
+let s:path_seg_sep = !exists('+shellslash') || &shellslash ? '/' : '\\'
 
 function! s:SID() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
@@ -70,7 +64,7 @@ endfunction " }}}
 function! s:BufferFromRelativePath(relative) " {{{
     let sid = s:SID()
     return { 'relative': a:relative
-          \, 'path': join([getcwd(), a:relative], s:directory_separator)
+          \, 'path': join([getcwd(), a:relative], s:path_seg_sep)
           \, 'switch': function(printf('<SNR>%s_SwitchToPath', sid))
           \, 'switchlcd': function(printf('<SNR>%s_SwitchToPathLCD', sid))
           \, 'IsChoosable': function(printf('<SNR>%s_PathChoosable', sid))
@@ -144,7 +138,7 @@ function! s:SetUniqueSuffixes(node, cand, accum) " {{{
         let val = a:node[seg]
         if type(val) == type([])
             let buf = val[0]
-            let buf['suffix'] = join(reverse(cand), s:directory_separator)
+            let buf['suffix'] = join(reverse(cand), s:path_seg_sep)
         elseif len(children) == 1
             call add(accum, seg)
             call s:SetUniqueSuffixes(val, cand, accum)
@@ -165,7 +159,7 @@ function! s:ShortestUniqueSuffixes(buffers) " {{{
     let trie = {}
     for buf in a:buffers
         " Special case for e.g. fugitive-like paths with multiple adjacent separators
-        let sep = printf('\V%s\+', s:directory_separator)
+        let sep = printf('\V%s\+', s:path_seg_sep)
         let segments = reverse(split(buf['path'], sep))
 
         " ASSUMPTION: None of the segments list is a prefix of another
