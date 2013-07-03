@@ -10,57 +10,64 @@ else
     echoerr "You're running chbuf plugin on an unsupported OS"
 endif
 
-function! chbuf#SwitchToNumber() dict " {{{
+function! s:SID() " {{{
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun " }}}
+
+function! s:SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
-function! chbuf#SwitchToNumberLCD() dict " {{{
+function! s:SwitchToNumberLCD() dict " {{{
     execute 'silent' 'buffer' self.number
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! chbuf#NumberChoosable() dict " {{{
+function! s:NumberChoosable() dict " {{{
     return 1
 endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
     let path = expand('#' . a:number . ':p')
+    let sid = s:SID()
     return { 'number': a:number
           \, 'path': path
           \, 'name': a:name
-          \, 'switch': function('chbuf#SwitchToNumber')
-          \, 'switchlcd': function('chbuf#SwitchToNumberLCD')
-          \, 'IsChoosable': function('chbuf#NumberChoosable')
+          \, 'switch': function(printf('<SNR>%s_SwitchToNumber', sid))
+          \, 'switchlcd': function(printf('<SNR>%s_SwitchToNumberLCD', sid))
+          \, 'IsChoosable': function(printf('<SNR>%s_NumberChoosable', sid))
           \}
 endfunction " }}}
 
-function! chbuf#SwitchToPath() dict " {{{
+function! s:SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
-function! chbuf#SwitchToPathLCD() dict " {{{
+function! s:SwitchToPathLCD() dict " {{{
     execute 'silent' 'edit' self.path
     execute 'lcd' expand("%:h")
 endfunction " }}}
 
-function! chbuf#PathChoosable() dict " {{{
+function! s:PathChoosable() dict " {{{
     return filereadable(self.path)
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
+    let sid = s:SID()
     return { 'path': expand(a:path)
-          \, 'switch': function('chbuf#SwitchToPath')
-          \, 'switchlcd': function('chbuf#SwitchToPathLCD')
-          \, 'IsChoosable': function('chbuf#PathChoosable')
+          \, 'switch': function(printf('<SNR>%s_SwitchToPath', sid))
+          \, 'switchlcd': function(printf('<SNR>%s_SwitchToPathLCD', sid))
+          \, 'IsChoosable': function(printf('<SNR>%s_PathChoosable', sid))
           \}
 endfunction " }}}
 
 function! s:BufferFromRelativePath(relative) " {{{
+    let sid = s:SID()
     return { 'relative': a:relative
           \, 'path': join([getcwd(), a:relative], s:directory_separator)
-          \, 'switch': function('chbuf#SwitchToPath')
-          \, 'switchlcd': function('chbuf#SwitchToPathLCD')
-          \, 'IsChoosable': function('chbuf#PathChoosable')
+          \, 'switch': function(printf('<SNR>%s_SwitchToPath', sid))
+          \, 'switchlcd': function(printf('<SNR>%s_SwitchToPathLCD', sid))
+          \, 'IsChoosable': function(printf('<SNR>%s_PathChoosable', sid))
           \}
 endfunction " }}}
 
@@ -219,14 +226,10 @@ function! s:FilterUnchoosable(buffers) " {{{
     return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
-function! s:SID() " {{{
-    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-endfun " }}}
-
 function! s:PromptBuffer() " {{{
     let buffers = extend(s:GetBuffers(), s:GetOldFiles())
     let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:UniqPaths(buffers))))
-    let result = getline#GetLine(function('<SNR>' . s:SID() . '_' . 'GetLineCallback'))
+    let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
     unlet w:chbuf_cache
     return result
 endfunction " }}}
@@ -234,7 +237,7 @@ endfunction " }}}
 function! s:PromptFile() " {{{
     let buffers = s:GetGlobFiles()
     let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(buffers)))
-    let result = getline#GetLine(function('<SNR>' . s:SID() . '_' . 'GetLineCallback'))
+    let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
     unlet w:chbuf_cache
     return result
 endfunction " }}}
