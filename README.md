@@ -1,7 +1,7 @@
 # What is it?
 
-An highly interactive way of jumping to buffers and recently edited files.
-Recent files list is obtained via `v:oldfiles` variable (see `:help v:oldfiles`).
+An highly interactive way of jumping to buffers, files listed in `.viminfo` and
+those from current directory.
 
 # Status
 
@@ -18,7 +18,8 @@ Assuming you have Pathogen up and running:
 
 Just add a mapping of your choice to `.vimrc`, e.g.:
 
-    noremap <silent> <Leader>b :call chbuf#SwitchBuffer()<CR>
+    noremap <silent> <Leader>b :call chbuf#ChangeBuffer()<CR>
+    noremap <silent> <Leader>f :call chbuf#ChangeFile()<CR>
 
 # To Do
 

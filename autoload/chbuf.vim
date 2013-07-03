@@ -55,6 +55,19 @@ function! s:BufferFromPath(path) " {{{
           \}
 endfunction " }}}
 
+function! s:BufferFromRelativePath(relative) " {{{
+    return { 'relative': a:relative
+          \, 'path': join([getcwd(), a:relative], s:directory_separator)
+          \, 'switch': function('chbuf#SwitchToPath')
+          \, 'switchlcd': function('chbuf#SwitchToPathLCD')
+          \, 'IsChoosable': function('chbuf#PathChoosable')
+          \}
+endfunction " }}}
+
+function! s:GetGlobFiles() " {{{
+    return map(glob('**', 0, 1), 's:BufferFromRelativePath(v:val)')
+endfunction " }}}
+
 function! s:GetOldFiles() " {{{
     return map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
 endfunction " }}}
@@ -218,8 +231,16 @@ function! s:PromptBuffer() " {{{
     return result
 endfunction " }}}
 
-function! chbuf#SwitchBuffer() " {{{
-    let choice = s:PromptBuffer()
+function! s:PromptFile() " {{{
+    let buffers = s:GetGlobFiles()
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(buffers)))
+    let result = getline#GetLine(function('<SNR>' . s:SID() . '_' . 'GetLineCallback'))
+    unlet w:chbuf_cache
+    return result
+endfunction " }}}
+
+function! s:Change(prompt) " {{{
+    let choice = call(a:prompt, [])
     if len(choice) == 0
         return
     endif
@@ -241,6 +262,13 @@ function! chbuf#SwitchBuffer() " {{{
     endif
 endfunction " }}}
 
+function! chbuf#ChangeBuffer() " {{{
+    return s:Change(function('s:PromptBuffer'))
+endfunction " }}}
+
+function! chbuf#ChangeFile() " {{{
+    return s:Change(function('s:PromptFile'))
+endfunction " }}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
