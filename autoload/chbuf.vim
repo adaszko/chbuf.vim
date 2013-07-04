@@ -229,7 +229,12 @@ function! s:GetLineCallback(input) " {{{
 endfunction " }}}
 
 function! s:FilterUnchoosable(buffers) " {{{
-    return filter(a:buffers, 'v:val.IsChoosable()')
+    if has('win32')
+        " filereadable() seems to be rather slow on win32
+        return a:buffers
+    else
+        return filter(a:buffers, 'v:val.IsChoosable()')
+    endif
 endfunction " }}}
 
 function! s:PromptBuffer() " {{{
