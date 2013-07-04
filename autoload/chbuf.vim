@@ -55,7 +55,12 @@ function! s:SwitchToPathLCD() dict " {{{
 endfunction " }}}
 
 function! s:PathChoosable() dict " {{{
-    return filereadable(self.path)
+    if has('win32')
+        " filereadable() seems to be rather slow on win32
+        return 1
+    else
+        return filereadable(self.path)
+    endif
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
@@ -229,12 +234,7 @@ function! s:GetLineCallback(input) " {{{
 endfunction " }}}
 
 function! s:FilterUnchoosable(buffers) " {{{
-    if has('win32')
-        " filereadable() seems to be rather slow on win32
-        return a:buffers
-    else
-        return filter(a:buffers, 'v:val.IsChoosable()')
-    endif
+    return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
 function! s:Prompt(buffers) " {{{
