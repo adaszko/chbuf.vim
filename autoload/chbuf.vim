@@ -16,11 +16,7 @@ else
     let s:escaped_path_seg_sep = '\\'
 endif
 
-if has('unix')
-    let s:case_sensitive_file_system = 1
-else
-    let s:case_sensitive_file_system = 0
-endif
+let s:case_sensitive_file_system = has('unix')
 
 function! s:SID() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
