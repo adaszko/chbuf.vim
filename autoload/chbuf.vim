@@ -186,7 +186,7 @@ function! s:ShortestUniqueSuffixes(buffers) " {{{
     return a:buffers
 endfunction " }}}
 
-function! s:FilterBuffersMatching(input, buffers) " {{{
+function! s:FilterMatching(input, buffers) " {{{
     let result = a:buffers
 
     if &ignorecase
@@ -219,7 +219,7 @@ function! s:RenderHint(buffers) " {{{
 endfunction " }}}
 
 function! s:GetLineCallback(input) " {{{
-    let matching = s:FilterBuffersMatching(a:input, copy(w:chbuf_cache))
+    let matching = s:FilterMatching(a:input, copy(w:chbuf_cache))
 
     if len(matching) == 0
         return []
