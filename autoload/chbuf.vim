@@ -16,6 +16,12 @@ else
     let s:escaped_path_seg_sep = '\\'
 endif
 
+if has('unix')
+    let s:case_sensitive_file_system = 1
+else
+    let s:case_sensitive_file_system = 0
+endif
+
 function! s:SID() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun " }}}
@@ -128,7 +134,11 @@ function! s:UniqPaths(buffers) " {{{
             continue
         endif
 
-        let unique[buf['path']] = buf
+        if s:case_sensitive_file_system
+            let unique[buf['path']] = buf
+        else
+            let unique[tolower(buf['path'])] = buf
+        endif
     endfor
 
     return values(unique)
@@ -169,9 +179,10 @@ endfunction " }}}
 function! s:ShortestUniqueSuffixes(buffers) " {{{
     let trie = {}
     for buf in a:buffers
-        " Special case for e.g. fugitive-like paths with multiple adjacent separators
+        " Paths are allowed to have multiple adjacent segment separators
         let sep = printf('\V%s\+', s:escaped_path_seg_sep)
-        let segments = reverse(split(buf['path'], sep))
+        let path = s:case_sensitive_file_system ? buf['path'] : tolower(buf['path'])
+        let segments = reverse(split(path, sep))
 
         " ASSUMPTION: None of the segments list is a prefix of another
         let node = trie
