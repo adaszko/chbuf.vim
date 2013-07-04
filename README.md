@@ -19,6 +19,7 @@ Assuming you have Pathogen up and running:
 Just add a mapping of your choice to `.vimrc`, e.g.:
 
     noremap <silent> <Leader>b :call chbuf#ChangeBuffer()<CR>
+    noremap <silent> <Leader>o :call chbuf#ChangeOldFile()<CR>
     noremap <silent> <Leader>f :call chbuf#ChangeFile('**')<CR>
 
 # To Do

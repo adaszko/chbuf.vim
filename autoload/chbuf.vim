@@ -202,7 +202,7 @@ function! s:FilterBuffersMatching(input, buffers) " {{{
     return result
 endfunction " }}}
 
-function! s:FilterIgnoredBuffers(buffers) " {{{
+function! s:FilterIgnored(buffers) " {{{
     if exists('g:chbuf_ignore_pattern')
         call filter(a:buffers, "v:val.path !~ '" . escape(g:chbuf_ignore_pattern, "'") . "'")
     endif
@@ -237,17 +237,8 @@ function! s:FilterUnchoosable(buffers) " {{{
     endif
 endfunction " }}}
 
-function! s:PromptBuffer() " {{{
-    let buffers = extend(s:GetBuffers(), s:GetOldFiles())
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(s:UniqPaths(buffers))))
-    let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
-    unlet w:chbuf_cache
-    return result
-endfunction " }}}
-
-function! s:PromptFile(pattern) " {{{
-    let buffers = s:GetGlobFiles(a:pattern)
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(buffers)))
+function! s:Prompt(buffers) " {{{
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnored(a:buffers)))
     let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
     unlet w:chbuf_cache
     return result
@@ -276,11 +267,20 @@ function! s:Change(choice) " {{{
 endfunction " }}}
 
 function! chbuf#ChangeBuffer() " {{{
-    return s:Change(s:PromptBuffer())
+    return s:Change(s:Prompt(s:GetBuffers()))
+endfunction " }}}
+
+function! chbuf#ChangeOldFile() " {{{
+    return s:Change(s:Prompt(s:GetOldFiles()))
+endfunction " }}}
+
+function! chbuf#ChangeBufferOldFile() " {{{
+    let buffers = extend(s:GetBuffers(), s:GetOldFiles())
+    return s:Change(s:Prompt(s:UniqPaths(buffers)))
 endfunction " }}}
 
 function! chbuf#ChangeFile(pattern) " {{{
-    return s:Change(s:PromptFile(a:pattern))
+    return s:Change(s:Prompt(s:GetGlobFiles(a:pattern)))
 endfunction " }}}
 
 let &cpo = s:save_cpo
