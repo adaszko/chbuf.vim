@@ -77,8 +77,8 @@ function! s:BufferFromRelativePath(relative) " {{{
           \}
 endfunction " }}}
 
-function! s:GetGlobFiles() " {{{
-    return map(glob('**', 0, 1), 's:BufferFromRelativePath(v:val)')
+function! s:GetGlobFiles(pattern) " {{{
+    return map(glob(a:pattern, 0, 1), 's:BufferFromRelativePath(v:val)')
 endfunction " }}}
 
 function! s:GetOldFiles() " {{{
@@ -245,20 +245,19 @@ function! s:PromptBuffer() " {{{
     return result
 endfunction " }}}
 
-function! s:PromptFile() " {{{
-    let buffers = s:GetGlobFiles()
+function! s:PromptFile(pattern) " {{{
+    let buffers = s:GetGlobFiles(a:pattern)
     let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnoredBuffers(buffers)))
     let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
-function! s:Change(prompt) " {{{
-    let choice = call(a:prompt, [])
-    if len(choice) == 0
+function! s:Change(choice) " {{{
+    if len(a:choice) == 0
         return
     endif
-    let [buffer, method] = choice
+    let [buffer, method] = a:choice
 
     if method == '<CR>'
         call buffer.switch()
@@ -277,11 +276,11 @@ function! s:Change(prompt) " {{{
 endfunction " }}}
 
 function! chbuf#ChangeBuffer() " {{{
-    return s:Change(function('s:PromptBuffer'))
+    return s:Change(s:PromptBuffer())
 endfunction " }}}
 
-function! chbuf#ChangeFile() " {{{
-    return s:Change(function('s:PromptFile'))
+function! chbuf#ChangeFile(pattern) " {{{
+    return s:Change(s:PromptFile(a:pattern))
 endfunction " }}}
 
 let &cpo = s:save_cpo
