@@ -77,8 +77,8 @@ function! s:BufferFromRelativePath(relative) " {{{
           \}
 endfunction " }}}
 
-function! s:GetGlobFiles(pattern) " {{{
-    return map(glob(a:pattern, 0, 1), 's:BufferFromRelativePath(v:val)')
+function! s:GetGlobFiles(glob_pattern) " {{{
+    return map(glob(a:glob_pattern, 0, 1), 's:BufferFromRelativePath(v:val)')
 endfunction " }}}
 
 function! s:GetOldFiles() " {{{
@@ -279,8 +279,8 @@ function! chbuf#ChangeBufferOldFile() " {{{
     return s:Change(s:Prompt(s:UniqPaths(buffers)))
 endfunction " }}}
 
-function! chbuf#ChangeFile(pattern) " {{{
-    return s:Change(s:Prompt(s:GetGlobFiles(a:pattern)))
+function! chbuf#ChangeFile(glob_pattern) " {{{
+    return s:Change(s:Prompt(s:GetGlobFiles(a:glob_pattern)))
 endfunction " }}}
 
 let &cpo = s:save_cpo
