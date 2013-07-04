@@ -88,11 +88,12 @@ function! s:GetGlobFiles(glob_pattern) " {{{
     return map(glob(a:glob_pattern, 0, 1), 's:BufferFromRelativePath(v:val)')
 endfunction " }}}
 
-function! s:GetOldFiles() " {{{
-    return map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
+function! s:GetOldFiles(ignored_pattern) " {{{
+    let result = map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
+    return filter(result, "v:val.path !~ '" . escape(a:ignored_pattern, "'") . "'")
 endfunction " }}}
 
-function! s:GetBuffers() " {{{
+function! s:GetBuffers(ignored_pattern) " {{{
     let result = []
 
     for buffer in range(1, bufnr('$'))
@@ -116,7 +117,12 @@ function! s:GetBuffers() " {{{
             continue
         endif
 
-        call add(result, s:BufferFromNumber(buffer, name))
+        let buf = s:BufferFromNumber(buffer, name)
+        if buf.path =~ a:ignored_pattern
+            continue
+        endif
+
+        call add(result, buf)
     endfor
 
     return result
@@ -214,14 +220,6 @@ function! s:FilterMatching(input, buffers) " {{{
     return result
 endfunction " }}}
 
-function! s:FilterIgnored(buffers) " {{{
-    if exists('g:chbuf_ignore_pattern')
-        call filter(a:buffers, "v:val.path !~ '" . escape(g:chbuf_ignore_pattern, "'") . "'")
-    endif
-
-    return a:buffers
-endfunction " }}}
-
 function! s:RenderHint(buffers) " {{{
     if len(a:buffers) == 1
         return a:buffers[0].path
@@ -245,7 +243,7 @@ function! s:FilterUnchoosable(buffers) " {{{
 endfunction " }}}
 
 function! s:Prompt(buffers) " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(s:FilterIgnored(a:buffers)))
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(a:buffers))
     let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
     unlet w:chbuf_cache
     return result
@@ -273,16 +271,16 @@ function! s:Change(choice) " {{{
     endif
 endfunction " }}}
 
-function! chbuf#ChangeBuffer() " {{{
-    return s:Change(s:Prompt(s:GetBuffers()))
+function! chbuf#ChangeBuffer(ignored_pattern) " {{{
+    return s:Change(s:Prompt(s:GetBuffers(a:ignored_pattern)))
 endfunction " }}}
 
-function! chbuf#ChangeOldFile() " {{{
-    return s:Change(s:Prompt(s:GetOldFiles()))
+function! chbuf#ChangeOldFile(ignored_pattern) " {{{
+    return s:Change(s:Prompt(s:GetOldFiles(ignored_pattern)))
 endfunction " }}}
 
-function! chbuf#ChangeBufferOldFile() " {{{
-    let buffers = extend(s:GetBuffers(), s:GetOldFiles())
+function! chbuf#ChangeBufferOldFile(ignored_pattern) " {{{
+    let buffers = extend(s:GetBuffers(a:ignored_pattern), s:GetOldFiles(a:ignored_pattern))
     return s:Change(s:Prompt(s:UniqPaths(buffers)))
 endfunction " }}}
 

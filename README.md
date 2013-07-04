@@ -18,8 +18,9 @@ Assuming you have Pathogen up and running:
 
 Just add a mapping of your choice to `.vimrc`, e.g.:
 
-    noremap <silent> <Leader>b :call chbuf#ChangeBuffer()<CR>
-    noremap <silent> <Leader>o :call chbuf#ChangeOldFile()<CR>
+    let g:chbuf_ignore_pattern = '\v\C(^fugitive://|^/usr/local/Cellar/macvim/|^/private/var/folders/|/.git/COMMIT_EDITMSG$)'
+    noremap <silent> <Leader>b :call chbuf#ChangeBuffer(g:chbuf_ignore_pattern)<CR>
+    noremap <silent> <Leader>B :call chbuf#ChangeBufferOldFile(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>f :call chbuf#ChangeFile('**')<CR>
 
 # To Do
