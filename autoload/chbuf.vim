@@ -85,7 +85,10 @@ function! s:BufferFromRelativePath(relative) " {{{
 endfunction " }}}
 
 function! s:GetGlobFiles(glob_pattern) " {{{
-    return map(glob(a:glob_pattern, 0, 1), 's:BufferFromRelativePath(v:val)')
+    let paths = glob(a:glob_pattern, 0, 1)
+    call filter(paths, 'getftype(v:val) =~# "\v(file|link)"')
+    call map(paths, 's:BufferFromRelativePath(v:val)')
+    return paths
 endfunction " }}}
 
 function! s:GetOldFiles(ignored_pattern) " {{{
