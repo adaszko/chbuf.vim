@@ -87,13 +87,11 @@ function! s:GetLineCustom(config) " {{{
 
     while 1
         let c = getchar()
-        if c == 27 " <Esc>
-            echon s:Rubber(displayed)
-            return []
-        endif
-
         if type(c) == type(0)
-            if c == 13 " <Enter>
+            if c == 27 " <Esc>
+                echon s:Rubber(displayed)
+                return []
+            elseif c == 13 " <Enter>
                 if state.choice.IsChoosable()
                     echon s:Rubber(displayed)
                     return [state.choice, '<CR>']
