@@ -22,6 +22,12 @@ function! s:SID() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun " }}}
 
+let s:sid = s:SID()
+
+function! s:MakeRef(name) " {{{
+    return function(printf('<SNR>%s_%s', s:sid, a:name))
+endfunction " }}}
+
 function! s:SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
@@ -37,13 +43,12 @@ endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
     let path = expand('#' . a:number . ':p')
-    let sid = s:SID()
     return { 'number': a:number
           \, 'path': path
           \, 'name': a:name
-          \, 'switch': function(printf('<SNR>%s_SwitchToNumber', sid))
-          \, 'switchlcd': function(printf('<SNR>%s_SwitchToNumberLCD', sid))
-          \, 'IsChoosable': function(printf('<SNR>%s_NumberChoosable', sid))
+          \, 'switch': s:MakeRef('SwitchToNumber')
+          \, 'switchlcd': s:MakeRef('SwitchToNumberLCD')
+          \, 'IsChoosable': s:MakeRef('NumberChoosable')
           \}
 endfunction " }}}
 
@@ -66,21 +71,19 @@ function! s:PathChoosable() dict " {{{
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
-    let sid = s:SID()
     return { 'path': expand(a:path)
-          \, 'switch': function(printf('<SNR>%s_SwitchToPath', sid))
-          \, 'switchlcd': function(printf('<SNR>%s_SwitchToPathLCD', sid))
-          \, 'IsChoosable': function(printf('<SNR>%s_PathChoosable', sid))
+          \, 'switch': s:MakeRef('SwitchToPath')
+          \, 'switchlcd': s:MakeRef('SwitchToPathLCD')
+          \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
 
 function! s:BufferFromRelativePath(relative) " {{{
-    let sid = s:SID()
     return { 'relative': a:relative
           \, 'path': join([getcwd(), a:relative], s:unescaped_path_seg_sep)
-          \, 'switch': function(printf('<SNR>%s_SwitchToPath', sid))
-          \, 'switchlcd': function(printf('<SNR>%s_SwitchToPathLCD', sid))
-          \, 'IsChoosable': function(printf('<SNR>%s_PathChoosable', sid))
+          \, 'switch': s:MakeRef('SwitchToPath')
+          \, 'switchlcd': s:MakeRef('SwitchToPathLCD')
+          \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
 
