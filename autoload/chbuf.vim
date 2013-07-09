@@ -248,30 +248,62 @@ function! s:FilterUnchoosable(buffers) " {{{
     return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
+function! s:AcceptChangeDir(state) " {{{
+    if a:state.choice.IsChoosable()
+        return {'result': 'CTRL-I'}
+    endif
+endfunction " }}}
+
+function! s:AcceptSplitHoriz(state) " {{{
+    if a:state.choice.IsChoosable()
+        return {'result': 'CTRL-S'}
+    endif
+endfunction " }}}
+
+function! s:AcceptSplitVert(state) " {{{
+    if a:state.choice.IsChoosable()
+        return {'result': 'CTRL-V'}
+    endif
+endfunction " }}}
+
+function! s:AcceptNewTab(state) " {{{
+    if a:state.choice.IsChoosable()
+        return {'result': 'CTRL-T'}
+    endif
+endfunction " }}}
+
+let s:key_handlers =
+    \{ 'CTRL-S': s:MakeRef('AcceptSplitHoriz')
+    \, 'CTRL-V': s:MakeRef('AcceptSplitVert')
+    \, 'CTRL-T': s:MakeRef('AcceptNewTab')
+    \, 'CTRL-I': s:MakeRef('AcceptChangeDir')
+    \}
+
 function! s:Prompt(buffers) " {{{
     let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(a:buffers))
-    let result = getline#GetLine(function(printf('<SNR>%s_GetLineCallback', s:SID())))
+    let result = getline#GetLine(s:MakeRef('GetLineCallback'), s:key_handlers)
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
 function! s:Change(choice) " {{{
-    if len(a:choice) == 0
+    if a:choice == {}
         return
     endif
-    let [buffer, method] = a:choice
+    let buffer = a:choice.choice
+    let method = a:choice.method
 
-    if method == '<CR>'
+    if method == 'CTRL-M'
         call buffer.switch()
-    elseif method == '<Tab>'
+    elseif method == 'CTRL-I'
         call buffer.switchlcd()
-    elseif method == '<C-T>'
+    elseif method == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
-    elseif method == '<C-S>'
+    elseif method == 'CTRL-S'
         execute 'split'
         call buffer.switch()
-    elseif method == '<C-V>'
+    elseif method == 'CTRL-V'
         execute 'vsplit'
         call buffer.switch()
     endif

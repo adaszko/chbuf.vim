@@ -12,6 +12,46 @@ set cpo&vim
 " This accounts for 'showcmd'.  Is there a way to calculate it?
 let g:getline_cmdwidth_fixup = 15
 
+let s:key_from_int = { 0: 'CTRL-@'
+                    \, 1: 'CTRL-A'
+                    \, 2: 'CTRL-B'
+                    \, 3: 'CTRL-C'
+                    \, 4: 'CTRL-D'
+                    \, 5: 'CTRL-E'
+                    \, 6: 'CTRL-F'
+                    \, 7: 'CTRL-G'
+                    \, 8: 'CTRL-H'
+                    \, 9: 'CTRL-I'
+                    \, 10: 'CTRL-J'
+                    \, 11: 'CTRL-K'
+                    \, 12: 'CTRL-L'
+                    \, 13: 'CTRL-M'
+                    \, 14: 'CTRL-N'
+                    \, 15: 'CTRL-O'
+                    \, 16: 'CTRL-P'
+                    \, 17: 'CTRL-Q'
+                    \, 18: 'CTRL-R'
+                    \, 19: 'CTRL-S'
+                    \, 20: 'CTRL-T'
+                    \, 21: 'CTRL-U'
+                    \, 22: 'CTRL-V'
+                    \, 23: 'CTRL-W'
+                    \, 24: 'CTRL-X'
+                    \, 25: 'CTRL-Y'
+                    \, 26: 'CTRL-Z'
+                    \, 27: 'CTRL-['
+                    \, 28: 'CTRL-\'
+                    \, 29: 'CTRL-]'
+                    \, 30: 'CTRL-^'
+                    \, 31: 'CTRL-_'
+                    \, 127: 'CTRL-?'
+                    \}
+
+let s:key_from_str = { "\x80kb": "CTRL-H"
+                    \, "\x80kD": "CTRL-?"
+                    \}
+
+
 function! s:NumChars(s) " {{{
     return strlen(substitute(a:s, '\v.', 'x', 'g'))
 endfunction " }}}
@@ -26,8 +66,35 @@ function! s:WithoutLastWord(string) " {{{
     return result
 endfunction " }}}
 
-function! s:InitialState(config) " {{{
+function! s:TransitionState(new_contents) dict " {{{
+    let candidates = self.config.GetChoicesFor(a:new_contents)
+    if len(candidates) == 0
+        return self
+    endif
+
+    let new_state = copy(self)
+    let new_state.contents = a:new_contents
+    let [new_state.choice, new_state.possible] = candidates
+    return new_state
+endfunction " }}}
+
+function! s:ShowState() dict " {{{
+    let cmdwidth = &columns - g:getline_cmdwidth_fixup
+    let line = self.config.prompt . self.contents . self.config.separator . self.possible
+    if s:NumChars(line) <= cmdwidth
+        return line
+    else
+        return strpart(line, 0, cmdwidth - s:NumChars(self.config.cont)) . self.config.cont
+    endif
+endfunction " }}}
+
+function! s:ShowPromptAndContents() dict " {{{
+    return self.config.prompt . self.contents
+endfunction " }}}
+
+function! s:MakeState(config) " {{{
     let state = {}
+    let state.config = a:config
     let state.contents = ""
     let candidates = a:config.GetChoicesFor(state.contents)
     if len(candidates) == 0
@@ -35,36 +102,10 @@ function! s:InitialState(config) " {{{
     endif
 
     let [state.choice, state.possible] = candidates
+    let state.Transition = function('s:TransitionState')
+    let state.Show = function('s:ShowState')
+    let state.ShowPromptAndContents = function('s:ShowPromptAndContents')
     return state
-endfunction " }}}
-
-function! s:StateTransition(state, config, newContents) " {{{
-    let candidates = a:config.GetChoicesFor(a:newContents)
-    if len(candidates) == 0
-        return a:state
-    endif
-
-    let a:state.contents = a:newContents
-    let [a:state.choice, a:state.possible] = candidates
-    return a:state
-endfunction " }}}
-
-function! s:ShowState(state, config) " {{{
-    let cmdwidth = &columns - g:getline_cmdwidth_fixup
-    let line = a:config.prompt . a:state.contents . a:config.separator . a:state.possible
-    if s:NumChars(line) <= cmdwidth
-        return line
-    else
-        return strpart(line, 0, cmdwidth - s:NumChars(a:config.continuation)) . a:config.continuation
-    endif
-endfunction " }}}
-
-function! s:ShowPromptContents(state, config) " {{{
-    return a:config.prompt . a:state.contents
-endfunction " }}}
-
-function! s:Show(line) " {{{
-    return strpart(a:line, 0, &columns - g:getline_cmdwidth_fixup)
 endfunction " }}}
 
 function! s:Rubber(displayed) " {{{
@@ -75,106 +116,153 @@ function! s:WithoutLastChar(s) " {{{
     return substitute(a:s, '\v.$', '', '')
 endfunction " }}}
 
-function! s:GetLineCustom(config) " {{{
-    let state = s:InitialState(a:config)
-    if state == {}
-        echon s:Show(a:config.empty)
-        return []
+function! s:Cancel(state) " {{{
+    return {}
+endfunction " }}}
+
+function! s:Accept(state) " {{{
+    if !a:state.choice.IsChoosable()
+        return {'state': a:state}
     endif
 
-    let displayed = s:ShowState(state, a:config)
-    echon displayed . "\r" . s:ShowPromptContents(state, a:config)
+    return {'result': 'CTRL-M'}
+endfunction " }}}
+
+function! s:UnixLineDiscard(state) " {{{
+    return {'state': a:state.Transition('')}
+endfunction " }}}
+
+function! s:UnixWordRubout(state) " {{{
+    return {'state': a:state.Transition(s:WithoutLastWord(a:state.contents)}
+endfunction " }}}
+
+function! s:Yank(state) " {{{
+    call setreg(v:register, a:state.choice.path)
+    return {}
+endfunction " }}}
+
+function! s:Nop(state) " {{{
+    return {'state': a:state}
+endfunction " }}}
+
+function! s:BackwardDeleteChar(state) " {{{
+    if empty(a:state.contents)
+        return {}
+    else
+        return {'state': a:state.Transition(s:WithoutLastChar(a:state.contents))}
+    endif
+endfunction " }}}
+
+function! s:SID() " {{{
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun " }}}
+
+let s:sid = s:SID()
+
+function! s:MakeRef(name) " {{{
+    return function(printf('<SNR>%s_%s', s:sid, a:name))
+endfunction " }}}
+
+let s:transition_from_key =
+    \{ 'CTRL-@': s:MakeRef('Nop')
+    \, 'CTRL-A': s:MakeRef('Nop')
+    \, 'CTRL-B': s:MakeRef('Nop')
+    \, 'CTRL-C': s:MakeRef('Nop')
+    \, 'CTRL-D': s:MakeRef('Nop')
+    \, 'CTRL-E': s:MakeRef('Nop')
+    \, 'CTRL-F': s:MakeRef('Nop')
+    \, 'CTRL-G': s:MakeRef('Nop')
+    \, 'CTRL-H': s:MakeRef('BackwardDeleteChar')
+    \, 'CTRL-I': s:MakeRef('Nop')
+    \, 'CTRL-J': s:MakeRef('Nop')
+    \, 'CTRL-K': s:MakeRef('Nop')
+    \, 'CTRL-L': s:MakeRef('Nop')
+    \, 'CTRL-M': s:MakeRef('Accept')
+    \, 'CTRL-N': s:MakeRef('Nop')
+    \, 'CTRL-P': s:MakeRef('Nop')
+    \, 'CTRL-Q': s:MakeRef('Nop')
+    \, 'CTRL-R': s:MakeRef('Nop')
+    \, 'CTRL-S': s:MakeRef('Nop')
+    \, 'CTRL-T': s:MakeRef('Nop')
+    \, 'CTRL-U': s:MakeRef('UnixLineDiscard')
+    \, 'CTRL-V': s:MakeRef('Nop')
+    \, 'CTRL-W': s:MakeRef('UnixWordRubout')
+    \, 'CTRL-X': s:MakeRef('Nop')
+    \, 'CTRL-Y': s:MakeRef('Yank')
+    \, 'CTRL-Z': s:MakeRef('Nop')
+    \, 'CTRL-[': s:MakeRef('Cancel')
+    \, 'CTRL-\': s:MakeRef('Nop')
+    \, 'CTRL-]': s:MakeRef('Nop')
+    \, 'CTRL-^': s:MakeRef('Nop')
+    \, 'CTRL-_': s:MakeRef('Nop')
+    \, 'CTRL-?': s:MakeRef('Nop')
+    \}
+
+function! s:GetLineCustom(config) " {{{
+    let state = s:MakeState(a:config)
+    if state == {}
+        echon a:config.empty
+        return {}
+    endif
+
+    let displayed = state.Show()
+    echon displayed . "\r" . state.ShowPromptAndContents()
 
     while 1
-        let c = getchar()
-        if type(c) == type(0)
-            if c == 27 " <Esc>
-                echon s:Rubber(displayed)
-                return []
-            elseif c == 13 " <Enter>
-                if state.choice.IsChoosable()
-                    echon s:Rubber(displayed)
-                    return [state.choice, '<CR>']
-                endif
-            elseif c == 21 " <C-U>
-                let state = s:StateTransition(state, a:config, "")
-            elseif c == 23 " <C-W>
-                let state = s:StateTransition(state, a:config, s:WithoutLastWord(state.contents))
-            elseif c == 25 " <C-Y>
-                call setreg(v:register, state.choice.path)
-                echon s:Rubber(displayed)
-                echon s:Show(a:config.separator . state.choice.path)
-                return []
-            elseif c == 1 " <C-a>
-                continue
-            elseif c == 4 " <C-d>
-                continue
-            elseif c == 5 " <C-e>
-                continue
-            elseif c == 8 " <C-h>
-                if empty(state.contents)
-                    echon s:Rubber(displayed)
-                    return []
-                else
-                    let state = s:StateTransition(state, a:config, s:WithoutLastChar(state.contents))
-                endif
-            elseif c == 9
-                if state.choice.IsChoosable()
-                    echon s:Rubber(displayed)
-                    return [state.choice, '<Tab>']
-                endif
-            elseif c == 19 " <C-s>
-                if state.choice.IsChoosable()
-                    echon s:Rubber(displayed)
-                    return [state.choice, '<C-S>']
-                endif
-            elseif c == 20 " <C-t>
-                if state.choice.IsChoosable()
-                    echon s:Rubber(displayed)
-                    return [state.choice, '<C-T>']
-                endif
-            elseif c == 22 " <C-v>
-                if state.choice.IsChoosable()
-                    echon s:Rubber(displayed)
-                    return [state.choice, '<C-V>']
-                endif
+        let key = getchar()
+        if type(key) == type(0)
+            if has_key(s:key_from_int, key)
+                let name = s:key_from_int[key]
+                let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
+                let result = call(Trans, [state])
             else
-                let newContents = state.contents . nr2char(c)
-                let state = s:StateTransition(state, a:config, newContents)
+                let new_contents = state.contents . nr2char(key)
+                let result = {'state': state.Transition(new_contents)}
             endif
-        elseif type(c) == type("")
-            if c == "\x80kb" " <BS>
-                if empty(state.contents)
-                    echon s:Rubber(displayed)
-                    return []
-                else
-                    let state = s:StateTransition(state, a:config, s:WithoutLastChar(state.contents))
-                endif
+        elseif type(key) == type("")
+            if has_key(s:key_from_str, key)
+                let name = s:key_from_str[key]
+                let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
+                let result = call(Trans, [state])
             endif
         endif
 
+        if result == {}
+            echon s:Rubber(displayed)
+            return {}
+        elseif has_key(result, 'result')
+            echon s:Rubber(displayed)
+            return {'choice': state.choice, 'method': result.result}
+        elseif has_key(result, 'state')
+            let state = result.state
+        else
+            throw 'getline: Incorrect key handler return value'
+        endif
+
         echon s:Rubber(displayed)
-        let displayed = s:ShowState(state, a:config)
-        echon displayed . "\r" . s:ShowPromptContents(state, a:config)
+        let displayed = state.Show()
+        echon displayed . "\r" . state.ShowPromptAndContents()
     endwhile
 endfunction " }}}
 
-function! getline#GetLine(GetChoicesCallback) " {{{
+function! getline#GetLine(GetChoicesCallback, key_handlers) " {{{
     let config = {}
 
     if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
         let config['prompt'] = '∷ '
         let config['separator'] = ' ↦ '
-        let config['continuation'] = '…'
+        let config['cont'] = '…'
         let config['empty'] = '∅'
     else
         let config['prompt'] = ':: '
         let config['separator'] = ' => '
-        let config['continuation'] = '...'
+        let config['cont'] = '...'
         let config['empty'] = '{}'
     endif
 
     let config['GetChoicesFor'] = a:GetChoicesCallback
+    let merged = extend(copy(s:transition_from_key), a:key_handlers)
+    let config['transitions'] = merged
 
     return s:GetLineCustom(config)
 endfunction " }}}
