@@ -23,6 +23,10 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
     noremap <silent> <Leader>B :call chbuf#ChangeBufferOldFile(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>f :call chbuf#ChangeFile('**')<CR>
 
+# Bugs
+
+It's generally slower on Windows.
+
 # To Do
 
  * Write help file
