@@ -79,14 +79,23 @@ function! s:TransitionState(new_contents) dict " {{{
     return new_state
 endfunction " }}}
 
-function! s:ShowState() dict " {{{
+function! s:Truncate(line) dict " {{{
     let cmdwidth = &columns - g:getline_cmdwidth_fixup
-    let line = self.config.prompt . self.contents . (len(self.possible) ? self.config.separator . self.possible : '')
-    if s:NumChars(line) <= cmdwidth
-        return line
+    if s:NumChars(a:line) <= cmdwidth
+        return a:line
     else
-        return strpart(line, 0, cmdwidth - s:NumChars(self.config.cont)) . self.config.cont
+        return strpart(a:line, 0, cmdwidth - s:NumChars(self.config.cont)) . self.config.cont
     endif
+endfunction " }}}
+
+function! s:ShowState() dict " {{{
+    if len(self.possible) > 0
+        let line = self.config.prompt . self.contents . self.config.separator . self.possible
+    else
+        let line = self.config.prompt . self.contents
+    endif
+
+    return self.Truncate(line)
 endfunction " }}}
 
 function! s:ShowPromptAndContents() dict " {{{
@@ -105,6 +114,7 @@ function! s:MakeState(config) " {{{
     let state.choice                = candidates.choice
     let state.possible              = get(candidates, 'possible', '')
     let state.Transition            = function('s:TransitionState')
+    let state.Truncate              = function('s:Truncate')
     let state.Show                  = function('s:ShowState')
     let state.ShowPromptAndContents = function('s:ShowPromptAndContents')
 
@@ -141,7 +151,7 @@ endfunction " }}}
 
 function! s:Yank(state) " {{{
     call setreg(v:register, a:state.choice.path)
-    return {}
+    return {'final': a:state.config.separator . a:state.choice.path}
 endfunction " }}}
 
 function! s:Nop(state) " {{{
@@ -230,14 +240,15 @@ function! s:GetLineCustom(config) " {{{
             endif
         endif
 
-        if result == {}
-            echon s:Rubber(displayed)
-            return {}
-        elseif has_key(result, 'result')
+        if has_key(result, 'result')
             echon s:Rubber(displayed)
             return {'choice': state.choice, 'method': result.result}
         elseif has_key(result, 'state')
             let state = result.state
+        elseif has_key(result, 'final')
+            echon s:Rubber(displayed)
+            echon state.Truncate(result.final)
+            return {}
         else
             throw 'getline: Incorrect key handler return value'
         endif
