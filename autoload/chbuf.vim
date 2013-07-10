@@ -38,10 +38,10 @@ endfunction " }}}
 
 function! s:BufferFromNumber(number, name) " {{{
     let path = expand('#' . a:number . ':p')
-    return { 'number': a:number
-          \, 'path': path
-          \, 'name': a:name
-          \, 'switch': s:MakeRef('SwitchToNumber')
+    return { 'number':      a:number
+          \, 'path':        path
+          \, 'name':        a:name
+          \, 'switch':      s:MakeRef('SwitchToNumber')
           \, 'IsChoosable': s:MakeRef('NumberChoosable')
           \}
 endfunction " }}}
@@ -55,16 +55,16 @@ function! s:PathChoosable() dict " {{{
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
-    return { 'path': expand(a:path)
-          \, 'switch': s:MakeRef('SwitchToPath')
+    return { 'path':        expand(a:path)
+          \, 'switch':      s:MakeRef('SwitchToPath')
           \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
 
 function! s:BufferFromRelativePath(relative) " {{{
-    return { 'relative': a:relative
-          \, 'path': join([getcwd(), a:relative], s:unescaped_path_seg_sep)
-          \, 'switch': s:MakeRef('SwitchToPath')
+    return { 'relative':    a:relative
+          \, 'path':        join([getcwd(), a:relative], s:unescaped_path_seg_sep)
+          \, 'switch':      s:MakeRef('SwitchToPath')
           \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
@@ -259,7 +259,7 @@ function! s:Prompt(buffers) " {{{
     endif
     let w:chbuf_cache = s:ShortestUniqueSuffixes(w:chbuf_cache)
 
-    let result = getline#GetLineOverrideKeys(s:MakeRef('GetLineCallback'), s:key_handlers)
+    let result = getline#GetLineReactivelyOverrideKeys(s:MakeRef('GetLineCallback'), s:key_handlers)
 
     unlet w:chbuf_cache
     return result

@@ -267,7 +267,7 @@ function! s:GetLineCustom(config) " {{{
     endwhile
 endfunction " }}}
 
-function! getline#GetLineOverrideKeys(callback, key_handlers) " {{{
+function! getline#GetLineReactivelyOverrideKeys(callback, key_handlers) " {{{
     let config = {}
 
     if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
@@ -289,16 +289,16 @@ function! getline#GetLineOverrideKeys(callback, key_handlers) " {{{
     return s:GetLineCustom(config)
 endfunction " }}}
 
-function! getline#GetLine(callback) " {{{
-    return getline#GetLineOverrideKeys(a:callback, s:transition_from_key)
+function! getline#GetLineReactively(callback) " {{{
+    return getline#GetLineReactivelyOverrideKeys(a:callback, s:transition_from_key)
 endfunction " }}}
 
 function! s:IdCallback(input) " {{{
     return {'choice': a:input}
 endfunction " }}}
 
-function! getline#GetLineSimple() " {{{
-    return getline#GetLine(function('s:IdCallback'))
+function! getline#GetLine() " {{{
+    return get(getline#GetLineReactively(function('s:IdCallback')), 'value', '')
 endfunction " }}}
 
 
