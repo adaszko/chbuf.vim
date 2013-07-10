@@ -51,12 +51,7 @@ function! s:SwitchToPath() dict " {{{
 endfunction " }}}
 
 function! s:PathChoosable() dict " {{{
-    if has('win32')
-        " filereadable() seems to be rather slow on win32
-        return 1
-    else
-        return filereadable(self.path)
-    endif
+    return filereadable(self.path)
 endfunction " }}}
 
 function! s:BufferFromPath(path) " {{{
@@ -267,8 +262,14 @@ let s:key_handlers =
     \}
 
 function! s:Prompt(buffers) " {{{
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(s:FilterUnchoosable(a:buffers))
+    let w:chbuf_cache = a:buffers
+    if !has('win32')
+        let w:chbuf_cache = s:FilterUnchoosable(w:chbuf_cache)
+    endif
+    let w:chbuf_cache = s:ShortestUniqueSuffixes(w:chbuf_cache)
+
     let result = getline#GetLine(s:MakeRef('GetLineCallback'), s:key_handlers)
+
     unlet w:chbuf_cache
     return result
 endfunction " }}}
