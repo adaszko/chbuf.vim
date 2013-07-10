@@ -67,6 +67,11 @@ function! s:WithoutLastWord(string) " {{{
 endfunction " }}}
 
 function! s:TransitionState(new_contents) dict " {{{
+    let cmdwidth = &columns - g:getline_cmdwidth_fixup
+    if len(self.config.prompt) + len(a:new_contents) + len(self.config.separator) >= cmdwidth - s:NumChars(self.config.cont)
+        return self
+    endif
+
     let candidates = self.config.callback(a:new_contents)
     if candidates == {}
         return self
