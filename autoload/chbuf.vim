@@ -32,11 +32,6 @@ function! s:SwitchToNumber() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
-function! s:SwitchToNumberLCD() dict " {{{
-    execute 'silent' 'buffer' self.number
-    execute 'lcd' expand("%:h")
-endfunction " }}}
-
 function! s:NumberChoosable() dict " {{{
     return 1
 endfunction " }}}
@@ -47,18 +42,12 @@ function! s:BufferFromNumber(number, name) " {{{
           \, 'path': path
           \, 'name': a:name
           \, 'switch': s:MakeRef('SwitchToNumber')
-          \, 'switchlcd': s:MakeRef('SwitchToNumberLCD')
           \, 'IsChoosable': s:MakeRef('NumberChoosable')
           \}
 endfunction " }}}
 
 function! s:SwitchToPath() dict " {{{
     execute 'silent' 'edit' self.path
-endfunction " }}}
-
-function! s:SwitchToPathLCD() dict " {{{
-    execute 'silent' 'edit' self.path
-    execute 'lcd' expand("%:h")
 endfunction " }}}
 
 function! s:PathChoosable() dict " {{{
@@ -73,7 +62,6 @@ endfunction " }}}
 function! s:BufferFromPath(path) " {{{
     return { 'path': expand(a:path)
           \, 'switch': s:MakeRef('SwitchToPath')
-          \, 'switchlcd': s:MakeRef('SwitchToPathLCD')
           \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
@@ -82,7 +70,6 @@ function! s:BufferFromRelativePath(relative) " {{{
     return { 'relative': a:relative
           \, 'path': join([getcwd(), a:relative], s:unescaped_path_seg_sep)
           \, 'switch': s:MakeRef('SwitchToPath')
-          \, 'switchlcd': s:MakeRef('SwitchToPathLCD')
           \, 'IsChoosable': s:MakeRef('PathChoosable')
           \}
 endfunction " }}}
@@ -296,7 +283,8 @@ function! s:Change(choice) " {{{
     if method == 'CTRL-M'
         call buffer.switch()
     elseif method == 'CTRL-I'
-        call buffer.switchlcd()
+        call buffer.switch()
+        execute 'lcd' expand("%:h")
     elseif method == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
