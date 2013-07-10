@@ -68,7 +68,7 @@ endfunction " }}}
 
 function! s:TransitionState(new_contents) dict " {{{
     let cmdwidth = &columns - g:getline_cmdwidth_fixup
-    if len(self.config.prompt) + len(a:new_contents) + len(self.config.separator) >= cmdwidth - s:NumChars(self.config.cont)
+    if len(self.config.prompt) + len(a:new_contents) > cmdwidth
         return self
     endif
 
@@ -89,7 +89,7 @@ function! s:Truncate(line) dict " {{{
     if s:NumChars(a:line) <= cmdwidth
         return a:line
     else
-        return strpart(a:line, 0, cmdwidth - s:NumChars(self.config.cont)) . self.config.cont
+        return matchstr(a:line, printf('\v^.{,%s}', cmdwidth)) . self.config.cont
     endif
 endfunction " }}}
 
