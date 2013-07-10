@@ -67,7 +67,7 @@ function! s:WithoutLastWord(string) " {{{
 endfunction " }}}
 
 function! s:TransitionState(new_contents) dict " {{{
-    let candidates = self.config.GetChoicesFor(a:new_contents)
+    let candidates = self.config.callback(a:new_contents)
     if candidates == {}
         return self
     endif
@@ -103,7 +103,7 @@ function! s:ShowPromptAndContents() dict " {{{
 endfunction " }}}
 
 function! s:MakeState(config) " {{{
-    let candidates = a:config.GetChoicesFor("")
+    let candidates = a:config.callback("")
     if candidates == {}
         return {}
     endif
@@ -134,11 +134,7 @@ function! s:Cancel(state) " {{{
 endfunction " }}}
 
 function! s:Accept(state) " {{{
-    if !a:state.choice.IsChoosable()
-        return {'state': a:state}
-    endif
-
-    return {'result': 'CTRL-M'}
+    return {'result': a:state.choice}
 endfunction " }}}
 
 function! s:UnixLineDiscard(state) " {{{
@@ -146,12 +142,7 @@ function! s:UnixLineDiscard(state) " {{{
 endfunction " }}}
 
 function! s:UnixWordRubout(state) " {{{
-    return {'state': a:state.Transition(s:WithoutLastWord(a:state.contents)}
-endfunction " }}}
-
-function! s:Yank(state) " {{{
-    call setreg(v:register, a:state.choice.path)
-    return {'final': a:state.config.separator . a:state.choice.path}
+    return {'state': a:state.Transition(s:WithoutLastWord(a:state.contents))}
 endfunction " }}}
 
 function! s:Nop(state) " {{{
@@ -201,7 +192,7 @@ let s:transition_from_key =
     \, 'CTRL-V': s:MakeRef('Nop')
     \, 'CTRL-W': s:MakeRef('UnixWordRubout')
     \, 'CTRL-X': s:MakeRef('Nop')
-    \, 'CTRL-Y': s:MakeRef('Yank')
+    \, 'CTRL-Y': s:MakeRef('Nop')
     \, 'CTRL-Z': s:MakeRef('Nop')
     \, 'CTRL-[': s:MakeRef('Cancel')
     \, 'CTRL-\': s:MakeRef('Nop')
@@ -223,12 +214,14 @@ function! s:GetLineCustom(config) " {{{
 
     while 1
         let key = getchar()
+
         if type(key) == type(0)
             if has_key(s:key_from_int, key)
                 let name = s:key_from_int[key]
                 let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
                 let result = call(Trans, [state])
             else
+                let name = ''
                 let new_contents = state.contents . nr2char(key)
                 let result = {'state': state.Transition(new_contents)}
             endif
@@ -237,18 +230,25 @@ function! s:GetLineCustom(config) " {{{
                 let name = s:key_from_str[key]
                 let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
                 let result = call(Trans, [state])
+            else
+                let name = ''
             endif
+        else
+            throw "getline: getchar() returned value of unknown type"
         endif
 
-        if has_key(result, 'result')
+        if result == {}
             echon s:Rubber(displayed)
-            return {'choice': state.choice, 'method': result.result}
+            return {'key': name}
+        elseif has_key(result, 'result')
+            echon s:Rubber(displayed)
+            return {'value': result.result, 'key': name}
         elseif has_key(result, 'state')
             let state = result.state
         elseif has_key(result, 'final')
             echon s:Rubber(displayed)
             echon state.Truncate(result.final)
-            return {}
+            return {'key': name}
         else
             throw 'getline: Incorrect key handler return value'
         endif
@@ -262,7 +262,7 @@ function! s:GetLineCustom(config) " {{{
     endwhile
 endfunction " }}}
 
-function! getline#GetLine(GetChoicesCallback, key_handlers) " {{{
+function! getline#GetLineOverrideKeys(callback, key_handlers) " {{{
     let config = {}
 
     if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
@@ -277,11 +277,23 @@ function! getline#GetLine(GetChoicesCallback, key_handlers) " {{{
         let config['empty'] = '{}'
     endif
 
-    let config['GetChoicesFor'] = a:GetChoicesCallback
+    let config['callback'] = a:callback
     let merged = extend(copy(s:transition_from_key), a:key_handlers)
     let config['transitions'] = merged
 
     return s:GetLineCustom(config)
+endfunction " }}}
+
+function! getline#GetLine(callback) " {{{
+    return getline#GetLineOverrideKeys(a:callback, s:transition_from_key)
+endfunction " }}}
+
+function! s:IdCallback(input) " {{{
+    return {'choice': a:input}
+endfunction " }}}
+
+function! getline#GetLineSimple() " {{{
+    return getline#GetLine(function('s:IdCallback'))
 endfunction " }}}
 
 

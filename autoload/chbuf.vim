@@ -230,35 +230,26 @@ function! s:FilterUnchoosable(buffers) " {{{
     return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
-function! s:AcceptChangeDir(state) " {{{
+function! s:Accept(state) " {{{
     if a:state.choice.IsChoosable()
-        return {'result': 'CTRL-I'}
+        return {'result': a:state.choice}
     endif
+
+    return {'state': a:state}
 endfunction " }}}
 
-function! s:AcceptSplitHoriz(state) " {{{
-    if a:state.choice.IsChoosable()
-        return {'result': 'CTRL-S'}
-    endif
-endfunction " }}}
-
-function! s:AcceptSplitVert(state) " {{{
-    if a:state.choice.IsChoosable()
-        return {'result': 'CTRL-V'}
-    endif
-endfunction " }}}
-
-function! s:AcceptNewTab(state) " {{{
-    if a:state.choice.IsChoosable()
-        return {'result': 'CTRL-T'}
-    endif
+function! s:Yank(state) " {{{
+    call setreg(v:register, a:state.choice.path)
+    return {'final': a:state.config.separator . a:state.choice.path}
 endfunction " }}}
 
 let s:key_handlers =
-    \{ 'CTRL-S': s:MakeRef('AcceptSplitHoriz')
-    \, 'CTRL-V': s:MakeRef('AcceptSplitVert')
-    \, 'CTRL-T': s:MakeRef('AcceptNewTab')
-    \, 'CTRL-I': s:MakeRef('AcceptChangeDir')
+    \{ 'CTRL-S': s:MakeRef('Accept')
+    \, 'CTRL-V': s:MakeRef('Accept')
+    \, 'CTRL-T': s:MakeRef('Accept')
+    \, 'CTRL-I': s:MakeRef('Accept')
+    \, 'CTRL-M': s:MakeRef('Accept')
+    \, 'CTRL-Y': s:MakeRef('Yank')
     \}
 
 function! s:Prompt(buffers) " {{{
@@ -268,31 +259,31 @@ function! s:Prompt(buffers) " {{{
     endif
     let w:chbuf_cache = s:ShortestUniqueSuffixes(w:chbuf_cache)
 
-    let result = getline#GetLine(s:MakeRef('GetLineCallback'), s:key_handlers)
+    let result = getline#GetLineOverrideKeys(s:MakeRef('GetLineCallback'), s:key_handlers)
 
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
-function! s:Change(choice) " {{{
-    if a:choice == {}
+function! s:Change(result) " {{{
+    if !has_key(a:result, 'value')
         return
     endif
-    let buffer = a:choice.choice
-    let method = a:choice.method
+    let buffer = a:result.value
+    let key = a:result.key
 
-    if method == 'CTRL-M'
+    if key == 'CTRL-M'
         call buffer.switch()
-    elseif method == 'CTRL-I'
+    elseif key == 'CTRL-I'
         call buffer.switch()
         execute 'lcd' expand("%:h")
-    elseif method == 'CTRL-T'
+    elseif key == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
-    elseif method == 'CTRL-S'
+    elseif key == 'CTRL-S'
         execute 'split'
         call buffer.switch()
-    elseif method == 'CTRL-V'
+    elseif key == 'CTRL-V'
         execute 'vsplit'
         call buffer.switch()
     endif
