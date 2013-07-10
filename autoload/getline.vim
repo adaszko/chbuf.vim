@@ -239,9 +239,12 @@ function! s:GetLineCustom(config) " {{{
             throw 'getline: Incorrect key handler return value'
         endif
 
-        echon s:Rubber(displayed)
+        let previous = displayed
         let displayed = state.Show()
-        echon displayed . "\r" . state.ShowPromptAndContents()
+        if displayed !=# previous
+            echon s:Rubber(displayed)
+            echon displayed . "\r" . state.ShowPromptAndContents()
+        endif
     endwhile
 endfunction " }}}
 
