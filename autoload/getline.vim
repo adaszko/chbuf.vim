@@ -68,19 +68,20 @@ endfunction " }}}
 
 function! s:TransitionState(new_contents) dict " {{{
     let candidates = self.config.GetChoicesFor(a:new_contents)
-    if len(candidates) == 0
+    if candidates == {}
         return self
     endif
 
-    let new_state = copy(self)
-    let new_state.contents = a:new_contents
-    let [new_state.choice, new_state.possible] = candidates
+    let new_state           = copy(self)
+    let new_state.contents  = a:new_contents
+    let new_state.choice    = candidates.choice
+    let new_state.possible  = get(candidates, 'possible', '')
     return new_state
 endfunction " }}}
 
 function! s:ShowState() dict " {{{
     let cmdwidth = &columns - g:getline_cmdwidth_fixup
-    let line = self.config.prompt . self.contents . self.config.separator . self.possible
+    let line = self.config.prompt . self.contents . (len(self.possible) ? self.config.separator . self.possible : '')
     if s:NumChars(line) <= cmdwidth
         return line
     else
@@ -93,18 +94,20 @@ function! s:ShowPromptAndContents() dict " {{{
 endfunction " }}}
 
 function! s:MakeState(config) " {{{
-    let state = {}
-    let state.config = a:config
-    let state.contents = ""
-    let candidates = a:config.GetChoicesFor(state.contents)
-    if len(candidates) == 0
+    let candidates = a:config.GetChoicesFor("")
+    if candidates == {}
         return {}
     endif
 
-    let [state.choice, state.possible] = candidates
-    let state.Transition = function('s:TransitionState')
-    let state.Show = function('s:ShowState')
+    let state                       = {}
+    let state.config                = a:config
+    let state.contents              = ""
+    let state.choice                = candidates.choice
+    let state.possible              = get(candidates, 'possible', '')
+    let state.Transition            = function('s:TransitionState')
+    let state.Show                  = function('s:ShowState')
     let state.ShowPromptAndContents = function('s:ShowPromptAndContents')
+
     return state
 endfunction " }}}
 

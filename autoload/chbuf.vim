@@ -225,10 +225,10 @@ function! s:GetLineCallback(input) " {{{
     let matching = s:FilterMatching(a:input, copy(w:chbuf_cache))
 
     if len(matching) == 0
-        return []
+        return {}
     endif
 
-    return [matching[0], s:RenderHint(matching)]
+    return {'choice': matching[0], 'possible': s:RenderHint(matching)}
 endfunction " }}}
 
 function! s:FilterUnchoosable(buffers) " {{{
