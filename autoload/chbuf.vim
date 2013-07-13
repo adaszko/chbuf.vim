@@ -327,9 +327,24 @@ function! s:ByLen(left, right) " {{{
     return len(a:left) - len(a:right)
 endfunction " }}}
 
+function! s:GoodDirs(path) " {{{
+    if a:path == '.'
+        return 0
+    endif
+
+    let type = getftype(a:path)
+    if type == 'dir'
+        return 1
+    elseif type == 'link'
+        return getftype(resolve(a:path)) == 'dir'
+    else
+        return 0
+    endif
+endfunction " }}}
+
 function! s:ListGlob(glob) " {{{
     let dirs = glob(a:glob, 1, 1)
-    call filter(dirs, 'getftype(v:val) == "dir" && v:val != "."')
+    call filter(dirs, 's:GoodDirs(v:val)')
     call sort(dirs, 's:ByLen')
     return dirs
 endfunction " }}}
