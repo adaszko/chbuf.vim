@@ -230,7 +230,7 @@ function! s:FilterUnchoosable(buffers) " {{{
     return filter(a:buffers, 'v:val.IsChoosable()')
 endfunction " }}}
 
-function! s:Accept(state) " {{{
+function! s:Accept(state, key) " {{{
     if a:state.choice.IsChoosable()
         return {'result': a:state.choice}
     endif
@@ -238,7 +238,7 @@ function! s:Accept(state) " {{{
     return {'state': a:state}
 endfunction " }}}
 
-function! s:Yank(state) " {{{
+function! s:Yank(state, key) " {{{
     call setreg(v:register, a:state.choice.path)
     return {'final': a:state.config.separator . a:state.choice.path}
 endfunction " }}}

@@ -44,6 +44,39 @@ let s:key_from_int = { 0: 'CTRL-@'
                     \, 29: 'CTRL-]'
                     \, 30: 'CTRL-^'
                     \, 31: 'CTRL-_'
+                    \, 32: ' '
+                    \, 33: '!'
+                    \, 34: '"'
+                    \, 35: '#'
+                    \, 36: '$'
+                    \, 37: '%'
+                    \, 38: '&'
+                    \, 39: "'"
+                    \, 40: "("
+                    \, 41: ")"
+                    \, 42: "*"
+                    \, 43: "+"
+                    \, 44: ","
+                    \, 45: "-"
+                    \, 46: "."
+                    \, 47: "/"
+                    \, 48: "0"
+                    \, 49: "1"
+                    \, 50: "2"
+                    \, 51: "3"
+                    \, 52: "4"
+                    \, 53: "5"
+                    \, 54: "6"
+                    \, 55: "7"
+                    \, 56: "8"
+                    \, 57: "9"
+                    \, 58: ":"
+                    \, 59: ";"
+                    \, 60: "<"
+                    \, 61: "="
+                    \, 62: ">"
+                    \, 63: "?"
+                    \, 64: "@"
                     \, 127: 'CTRL-?'
                     \}
 
@@ -134,32 +167,36 @@ function! s:WithoutLastChar(s) " {{{
     return substitute(a:s, '\v.$', '', '')
 endfunction " }}}
 
-function! s:Cancel(state) " {{{
+function! s:Cancel(state, key) " {{{
     return {}
 endfunction " }}}
 
-function! s:Accept(state) " {{{
+function! s:Accept(state, key) " {{{
     return {'result': a:state.choice}
 endfunction " }}}
 
-function! s:UnixLineDiscard(state) " {{{
+function! s:UnixLineDiscard(state, key) " {{{
     return {'state': a:state.Transition('')}
 endfunction " }}}
 
-function! s:UnixWordRubout(state) " {{{
+function! s:UnixWordRubout(state, key) " {{{
     return {'state': a:state.Transition(s:WithoutLastWord(a:state.contents))}
 endfunction " }}}
 
-function! s:Nop(state) " {{{
+function! s:Nop(state, key) " {{{
     return {'state': a:state}
 endfunction " }}}
 
-function! s:BackwardDeleteChar(state) " {{{
+function! s:BackwardDeleteChar(state, key) " {{{
     if empty(a:state.contents)
         return {}
     else
         return {'state': a:state.Transition(s:WithoutLastChar(a:state.contents))}
     endif
+endfunction " }}}
+
+function! s:SelfInsert(state, key) " {{{
+    return {'state': a:state.Transition(a:state.contents . a:key)}
 endfunction " }}}
 
 function! s:SID() " {{{
@@ -205,6 +242,39 @@ let s:transition_from_key =
     \, 'CTRL-^': s:MakeRef('Nop')
     \, 'CTRL-_': s:MakeRef('Nop')
     \, 'CTRL-?': s:MakeRef('Nop')
+    \, ' ': s:MakeRef('SelfInsert')
+    \, '!': s:MakeRef('SelfInsert')
+    \, '"': s:MakeRef('SelfInsert')
+    \, '#': s:MakeRef('SelfInsert')
+    \, '$': s:MakeRef('SelfInsert')
+    \, '%': s:MakeRef('SelfInsert')
+    \, '&': s:MakeRef('SelfInsert')
+    \, "'": s:MakeRef('SelfInsert')
+    \, "(": s:MakeRef('SelfInsert')
+    \, ")": s:MakeRef('SelfInsert')
+    \, "*": s:MakeRef('SelfInsert')
+    \, "+": s:MakeRef('SelfInsert')
+    \, ",": s:MakeRef('SelfInsert')
+    \, "-": s:MakeRef('SelfInsert')
+    \, ".": s:MakeRef('SelfInsert')
+    \, "/": s:MakeRef('SelfInsert')
+    \, "0": s:MakeRef('SelfInsert')
+    \, "1": s:MakeRef('SelfInsert')
+    \, "2": s:MakeRef('SelfInsert')
+    \, "3": s:MakeRef('SelfInsert')
+    \, "4": s:MakeRef('SelfInsert')
+    \, "5": s:MakeRef('SelfInsert')
+    \, "6": s:MakeRef('SelfInsert')
+    \, "7": s:MakeRef('SelfInsert')
+    \, "8": s:MakeRef('SelfInsert')
+    \, "9": s:MakeRef('SelfInsert')
+    \, ":": s:MakeRef('SelfInsert')
+    \, ";": s:MakeRef('SelfInsert')
+    \, "<": s:MakeRef('SelfInsert')
+    \, "=": s:MakeRef('SelfInsert')
+    \, ">": s:MakeRef('SelfInsert')
+    \, "?": s:MakeRef('SelfInsert')
+    \, "@": s:MakeRef('SelfInsert')
     \}
 
 function! s:GetLineCustom(config) " {{{
@@ -223,18 +293,19 @@ function! s:GetLineCustom(config) " {{{
         if type(key) == type(0)
             if has_key(s:key_from_int, key)
                 let name = s:key_from_int[key]
-                let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
-                let result = call(Trans, [state])
+                let Trans = get(state.config.transitions, name, s:MakeRef('SelfInsert'))
+                let result = call(Trans, [state, name])
             else
                 let name = ''
+                " Just insert unknown keys --- this is so esp. for regional characters
                 let new_contents = state.contents . nr2char(key)
                 let result = {'state': state.Transition(new_contents)}
             endif
         elseif type(key) == type("")
             if has_key(s:key_from_str, key)
                 let name = s:key_from_str[key]
-                let Trans = get(state.config.transitions, name, s:MakeRef('Nop'))
-                let result = call(Trans, [state])
+                let Trans = get(state.config.transitions, name, s:MakeRef('SelfInsert'))
+                let result = call(Trans, [state, name])
             else
                 let name = ''
             endif
