@@ -319,6 +319,55 @@ function! chbuf#ChangeFile(glob_pattern) " {{{
     return s:Change(s:Prompt(s:GetGlobFiles(a:glob_pattern)))
 endfunction " }}}
 
+function! s:ByLen(left, right) " {{{
+    return len(a:left) - len(a:right)
+endfunction " }}}
+
+function! s:ListGlob(glob) " {{{
+    let dirs = glob(a:glob, 1, 1)
+    call filter(dirs, 'getftype(v:val) == "dir" && v:val != "."')
+    call sort(dirs, 's:ByLen')
+    return dirs
+endfunction " }}}
+
+function! s:ChangeDirCallback(input) " {{{
+    let dirs = s:ListGlob('*')
+    call extend(dirs, s:ListGlob('.*'))
+
+    for sub in split(a:input)
+        call filter(dirs, printf('stridx(v:val, "%s") >= 0', escape(sub, '\')))
+    endfor
+
+    if len(dirs) == 0
+        return {}
+    endif
+
+    return {'choice': dirs[0], 'possible': join(dirs)}
+endfunction " }}}
+
+function! s:SafeChDir(dir) " {{{
+    execute 'lcd' escape(a:dir, ' ')
+endfunction " }}}
+
+function! s:ChSeg(state, key) " {{{
+    call s:SafeChDir(a:state.choice)
+    return {'state': a:state.Transition('')}
+endfunction " }}}
+
+let s:chdir_key_handlers =
+    \{ 'CTRL-I': s:MakeRef('ChSeg')
+    \, ' ': s:MakeRef('GuardedSpace')
+    \}
+
+function! chbuf#ChangeDir() " {{{
+    let result = getline#GetLineReactivelyOverrideKeys(s:MakeRef('ChangeDirCallback'), s:chdir_key_handlers)
+    if !has_key(result, 'value')
+        return
+    endif
+
+    call s:SafeChDir(result.value)
+endfunction " }}}
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
