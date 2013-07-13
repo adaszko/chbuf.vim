@@ -243,6 +243,18 @@ function! s:Yank(state, key) " {{{
     return {'final': a:state.config.separator . a:state.choice.path}
 endfunction " }}}
 
+function! s:GuardedSpace(state, key) " {{{
+    if len(a:state.contents) == 0
+        return {'state': a:state}
+    endif
+
+    if a:state.contents =~ '\v\s$'
+        return {'state': a:state}
+    endif
+
+    return {'state': a:state.Transition(a:state.contents . a:key)}
+endfunction " }}}
+
 let s:key_handlers =
     \{ 'CTRL-S': s:MakeRef('Accept')
     \, 'CTRL-V': s:MakeRef('Accept')
@@ -250,6 +262,7 @@ let s:key_handlers =
     \, 'CTRL-I': s:MakeRef('Accept')
     \, 'CTRL-M': s:MakeRef('Accept')
     \, 'CTRL-Y': s:MakeRef('Yank')
+    \, ' ': s:MakeRef('GuardedSpace')
     \}
 
 function! s:Prompt(buffers) " {{{
