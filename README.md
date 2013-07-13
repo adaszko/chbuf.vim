@@ -22,6 +22,9 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
     noremap <silent> <Leader>b :call chbuf#ChangeBuffer(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>B :call chbuf#ChangeBufferOldFile(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>f :call chbuf#ChangeFile('**')<CR>
+    noremap <silent> <Leader>c :call chbuf#ChangeDir()<CR>
+
+Note that functions above respect `ignorecase`, `wildignore` and `suffixes`.
 
 # Bugs
 
@@ -30,7 +33,6 @@ It's generally slower on Windows.
 # To Do
 
  * Write help file
- * Decouple getline.vim into a separate project
  * Tiny GIF screencast
 
 # License
