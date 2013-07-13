@@ -293,7 +293,7 @@ function! s:Change(result) " {{{
         call buffer.switch()
     elseif key == 'CTRL-I'
         call buffer.switch()
-        execute 'lcd' expand("%:h")
+        call s:SafeChDir(expand("%:h"))
     elseif key == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
@@ -358,8 +358,23 @@ function! s:ChSeg(state, key) " {{{
     return {'state': a:state.Transition('')}
 endfunction " }}}
 
+function! s:AcceptDir(state, key) " {{{
+    return {'result': a:state.choice}
+endfunction " }}}
+
+function! s:YankDir(state, key) " {{{
+    let full_path = getcwd() . s:escaped_path_seg_sep . a:state.choice
+    call setreg(v:register, full_path)
+    return {'final': a:state.config.separator . full_path}
+endfunction " }}}
+
 let s:chdir_key_handlers =
     \{ 'CTRL-I': s:MakeRef('ChSeg')
+    \, 'CTRL-S': s:MakeRef('AcceptDir')
+    \, 'CTRL-V': s:MakeRef('AcceptDir')
+    \, 'CTRL-T': s:MakeRef('AcceptDir')
+    \, 'CTRL-M': s:MakeRef('AcceptDir')
+    \, 'CTRL-Y': s:MakeRef('YankDir')
     \, ' ': s:MakeRef('GuardedSpace')
     \}
 
@@ -369,7 +384,15 @@ function! chbuf#ChangeDir() " {{{
         return
     endif
 
-    call s:SafeChDir(result.value)
+    if result.key == 'CTRL-M'
+        call s:SafeChDir(result.value)
+    elseif result.key == 'CTRL-T'
+        execute 'silent' 'tabedit' result.value
+    elseif result.key == 'CTRL-S'
+        execute 'silent' 'split' result.value
+    elseif result.key == 'CTRL-V'
+        execute 'silent' 'vsplit' result.value
+    endif
 endfunction " }}}
 
 let &cpo = s:save_cpo
