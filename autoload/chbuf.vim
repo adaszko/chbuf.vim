@@ -223,7 +223,7 @@ function! s:GetLineCallback(input) " {{{
         return {}
     endif
 
-    return {'choice': matching[0], 'possible': s:RenderHint(matching)}
+    return {'choice': matching[0], 'possible': matching, 'hint': s:RenderHint(matching)}
 endfunction " }}}
 
 function! s:FilterUnchoosable(buffers) " {{{
@@ -249,6 +249,10 @@ function! s:GuardedSpace(state, key) " {{{
     endif
 
     if a:state.contents =~ '\v\s$'
+        return {'state': a:state}
+    endif
+
+    if len(a:state.possible) <= 1
         return {'state': a:state}
     endif
 
@@ -342,7 +346,7 @@ function! s:ChangeDirCallback(input) " {{{
         return {}
     endif
 
-    return {'choice': dirs[0], 'possible': join(dirs)}
+    return {'choice': dirs[0], 'possible': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
 function! s:SafeChDir(dir) " {{{

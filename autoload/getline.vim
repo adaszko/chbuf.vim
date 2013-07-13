@@ -113,7 +113,8 @@ function! s:TransitionState(new_contents) dict " {{{
     let new_state           = copy(self)
     let new_state.contents  = a:new_contents
     let new_state.choice    = candidates.choice
-    let new_state.possible  = get(candidates, 'possible', '')
+    let new_state.possible  = candidates.possible
+    let new_state.hint      = candidates.hint
     return new_state
 endfunction " }}}
 
@@ -127,8 +128,8 @@ function! s:Truncate(line) dict " {{{
 endfunction " }}}
 
 function! s:ShowState() dict " {{{
-    if len(self.possible) > 0
-        let line = self.config.prompt . self.contents . self.config.separator . self.possible
+    if len(self.hint) > 0
+        let line = self.config.prompt . self.contents . self.config.separator . self.hint
     else
         let line = self.config.prompt . self.contents
     endif
@@ -150,7 +151,8 @@ function! s:MakeState(config) " {{{
     let state.config                = a:config
     let state.contents              = ""
     let state.choice                = candidates.choice
-    let state.possible              = get(candidates, 'possible', '')
+    let state.possible              = candidates.possible
+    let state.hint                  = candidates.hint
     let state.Transition            = s:MakeRef('TransitionState')
     let state.Truncate              = s:MakeRef('Truncate')
     let state.Show                  = s:MakeRef('ShowState')
