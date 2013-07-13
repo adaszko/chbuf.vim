@@ -118,10 +118,10 @@ function! s:MakeState(config) " {{{
     let state.contents              = ""
     let state.choice                = candidates.choice
     let state.possible              = get(candidates, 'possible', '')
-    let state.Transition            = function('s:TransitionState')
-    let state.Truncate              = function('s:Truncate')
-    let state.Show                  = function('s:ShowState')
-    let state.ShowPromptAndContents = function('s:ShowPromptAndContents')
+    let state.Transition            = s:MakeRef('TransitionState')
+    let state.Truncate              = s:MakeRef('Truncate')
+    let state.Show                  = s:MakeRef('ShowState')
+    let state.ShowPromptAndContents = s:MakeRef('ShowPromptAndContents')
 
     return state
 endfunction " }}}
