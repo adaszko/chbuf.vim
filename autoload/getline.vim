@@ -310,6 +310,7 @@ function! s:GetLineCustom(config) " {{{
                 let result = call(Trans, [state, name])
             else
                 let name = ''
+                let result = {'state': state}
             endif
         else
             throw "getline: getchar() returned value of unknown type"
