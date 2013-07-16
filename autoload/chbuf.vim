@@ -69,8 +69,8 @@ function! s:BufferFromRelativePath(relative) " {{{
           \}
 endfunction " }}}
 
-function! s:GetGlobFiles(glob_pattern) " {{{
-    let paths = glob(a:glob_pattern, 0, 1)
+function! s:GetGlobFiles() " {{{
+    let paths = glob('**', 0, 1)
     call filter(paths, 'getftype(v:val) =~# "\\v(file|link)"')
     call map(paths, 's:BufferFromRelativePath(v:val)')
     return paths
@@ -319,8 +319,8 @@ function! chbuf#ChangeBufferOldFile(ignored_pattern) " {{{
     return s:Change(s:Prompt(s:UniqPaths(buffers)))
 endfunction " }}}
 
-function! chbuf#ChangeFile(glob_pattern) " {{{
-    return s:Change(s:Prompt(s:GetGlobFiles(a:glob_pattern)))
+function! chbuf#ChangeFile() " {{{
+    return s:Change(s:Prompt(s:GetGlobFiles()))
 endfunction " }}}
 
 function! s:ByLen(left, right) " {{{
