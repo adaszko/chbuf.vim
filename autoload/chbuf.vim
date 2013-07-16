@@ -8,6 +8,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
+" {{{ Data Source: Filenames
 if !exists('+shellslash') || &shellslash
     let s:unescaped_path_seg_sep = '/'
     let s:escaped_path_seg_sep = '/'
@@ -322,7 +323,9 @@ endfunction " }}}
 function! chbuf#ChangeFile() " {{{
     return s:Change(s:Prompt(s:GetGlobFiles()))
 endfunction " }}}
+" }}}
 
+" {{{ Data Source: Directories
 function! s:ByLen(left, right) " {{{
     return len(a:left) - len(a:right)
 endfunction " }}}
@@ -416,6 +419,40 @@ function! chbuf#ChangeDir() " {{{
         execute 'silent' 'vsplit' result.value
     endif
 endfunction " }}}
+" }}}
+
+" {{{ Data Source: External Tools
+function! chbuf#SpotlightQueryCompletion(arglead, cmdline, cursorpos) " {{{
+    " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html#//apple_ref/doc/uid/TP40001849-CJBEJBHH
+    let keywords =
+        \[ 'kMDItemFSName'
+        \, 'kMDItemDisplayName'
+        \, 'kMDItemFSCreationDate'
+        \, 'kMDItemFSContentChangeDate'
+        \, 'kMDItemContentTypeTree'
+        \, 'kMDItemFSSize'
+        \, '$time.now'
+        \, '$time.today'
+        \, '$time.yesterday'
+        \, '$time.this_week'
+        \, '$time.this_month'
+        \, '$time.this_year'
+        \, '$time.iso'
+        \, 'InRange'
+        \]
+    return join(keywords, "\n")
+endfunction " }}}
+
+function! s:QuerySpotlight(query) " {{{
+    let paths = split(system(printf("mdfind -onlyin %s '%s'", shellescape(getcwd()), escape(a:query, "'"))), "\n")
+    return map(paths, 's:BufferFromPath(v:val)')
+endfunction " }}}
+
+function! chbuf#ChangeQuerySpotlight(query) " {{{
+    return s:Change(s:Prompt(s:QuerySpotlight(a:query)))
+endfunction " }}}
+" }}}
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
