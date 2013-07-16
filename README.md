@@ -1,11 +1,11 @@
 # What is it?
 
-An highly interactive way of jumping to buffers, files listed in `.viminfo` and
-those from current directory.
+A way of jumping to loaded buffers, elements of `v:oldfiles` and `:lcd`'ing
+optimised for minimal number of key strokes.
 
 # Status
 
-Should work on Mac OS X, Linux and Windows.  If it isn't, it's a bug.
+Ready to use.
 
 # Installation
 
