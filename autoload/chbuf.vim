@@ -349,9 +349,13 @@ function! s:ListGlob(glob) " {{{
     return dirs
 endfunction " }}}
 
-function! s:ChangeDirCallback(input) " {{{
+function! s:GetDirs() " {{{
     let dirs = s:ListGlob('*')
-    call extend(dirs, s:ListGlob('.*'))
+    return extend(dirs, s:ListGlob('.*'))
+endfunction " }}}
+
+function! s:ChangeDirCallback(input) " {{{
+    let dirs = copy(w:chbuf_cache)
 
     for sub in split(a:input)
         call filter(dirs, printf('stridx(v:val, "%s") >= 0', escape(sub, '\')))
@@ -370,6 +374,7 @@ endfunction " }}}
 
 function! s:ChSeg(state, key) " {{{
     call s:SafeChDir(a:state.choice)
+    let w:chbuf_cache = s:GetDirs()
     return {'state': a:state.Transition('')}
 endfunction " }}}
 
@@ -394,7 +399,9 @@ let s:chdir_key_handlers =
     \}
 
 function! chbuf#ChangeDir() " {{{
+    let w:chbuf_cache = s:GetDirs()
     let result = getline#GetLineReactivelyOverrideKeys(s:MakeRef('ChangeDirCallback'), s:chdir_key_handlers)
+    unlet w:chbuf_cache
     if !has_key(result, 'value')
         return
     endif
