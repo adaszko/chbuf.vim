@@ -307,21 +307,25 @@ function! s:Change(result) " {{{
     endif
 endfunction " }}}
 
+function! s:ChooseInteractively(possibilities) " {{{
+    return s:Change(s:Prompt(a:possibilities))
+endfunction " }}}
+
 function! chbuf#ChangeBuffer(ignored_pattern) " {{{
-    return s:Change(s:Prompt(s:GetBuffers(a:ignored_pattern)))
+    return s:ChooseInteractively(s:GetBuffers(a:ignored_pattern))
 endfunction " }}}
 
 function! chbuf#ChangeOldFile(ignored_pattern) " {{{
-    return s:Change(s:Prompt(s:GetOldFiles(ignored_pattern)))
+    return s:ChooseInteractively(s:GetOldFiles(ignored_pattern))
 endfunction " }}}
 
 function! chbuf#ChangeBufferOldFile(ignored_pattern) " {{{
     let buffers = extend(s:GetBuffers(a:ignored_pattern), s:GetOldFiles(a:ignored_pattern))
-    return s:Change(s:Prompt(s:UniqPaths(buffers)))
+    return s:ChooseInteractively(s:UniqPaths(buffers))
 endfunction " }}}
 
 function! chbuf#ChangeFile() " {{{
-    return s:Change(s:Prompt(s:GetGlobFiles()))
+    return s:ChooseInteractively(s:GetGlobFiles())
 endfunction " }}}
 " }}}
 
@@ -449,7 +453,7 @@ function! s:QuerySpotlight(query) " {{{
 endfunction " }}}
 
 function! chbuf#ChangeQuerySpotlight(query) " {{{
-    return s:Change(s:Prompt(s:QuerySpotlight(a:query)))
+    return s:ChooseInteractively(s:QuerySpotlight(a:query))
 endfunction " }}}
 " }}}
 
