@@ -315,7 +315,7 @@ function! chbuf#change_buffer(ignored_pattern) " {{{
     return s:choose_path_interactively(s:get_buffers(a:ignored_pattern))
 endfunction " }}}
 
-function! chbuf#change_buffer_old_file(ignored_pattern) " {{{
+function! chbuf#change_mixed(ignored_pattern) " {{{
     let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
     return s:choose_path_interactively(s:uniq_paths(buffers))
 endfunction " }}}
