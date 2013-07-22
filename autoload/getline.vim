@@ -85,11 +85,11 @@ let s:key_from_str = { "\x80kb": "CTRL-H"
                     \}
 
 
-function! s:NumChars(s) " {{{
+function! s:num_chars(s) " {{{
     return strlen(substitute(a:s, '\v.', 'x', 'g'))
 endfunction " }}}
 
-function! s:WithoutLastWord(string) " {{{
+function! s:without_last_word(string) " {{{
     let result = substitute(a:string, '\v(\S+)\s+\S+$', '\1', '')
 
     if result == a:string
@@ -99,7 +99,7 @@ function! s:WithoutLastWord(string) " {{{
     return result
 endfunction " }}}
 
-function! s:TransitionState(new_contents) dict " {{{
+function! s:transition_state(new_contents) dict " {{{
     let cmdwidth = &columns - g:getline_cmdwidth_fixup
     if len(self.config.prompt) + len(a:new_contents) > cmdwidth
         return self
@@ -118,176 +118,176 @@ function! s:TransitionState(new_contents) dict " {{{
     return new_state
 endfunction " }}}
 
-function! s:Truncate(line) dict " {{{
+function! s:truncate(line) dict " {{{
     let cmdwidth = &columns - g:getline_cmdwidth_fixup
-    if s:NumChars(a:line) <= cmdwidth
+    if s:num_chars(a:line) <= cmdwidth
         return a:line
     else
         return matchstr(a:line, printf('\v^.{,%s}', cmdwidth)) . self.config.cont
     endif
 endfunction " }}}
 
-function! s:ShowState() dict " {{{
+function! s:show_state() dict " {{{
     if len(self.hint) > 0
         let line = self.config.prompt . self.contents . self.config.separator . self.hint
     else
         let line = self.config.prompt . self.contents
     endif
 
-    return self.Truncate(line)
+    return self.truncate(line)
 endfunction " }}}
 
-function! s:ShowPromptAndContents() dict " {{{
+function! s:show_prompt_and_contents() dict " {{{
     return self.config.prompt . self.contents
 endfunction " }}}
 
-function! s:MakeState(config) " {{{
+function! s:make_state(config) " {{{
     let candidates = a:config.callback("")
     if candidates == {}
         return {}
     endif
 
-    let state                       = {}
-    let state.config                = a:config
-    let state.contents              = ""
-    let state.choice                = candidates.choice
-    let state.possible              = candidates.possible
-    let state.hint                  = candidates.hint
-    let state.Transition            = s:MakeRef('TransitionState')
-    let state.Truncate              = s:MakeRef('Truncate')
-    let state.Show                  = s:MakeRef('ShowState')
-    let state.ShowPromptAndContents = s:MakeRef('ShowPromptAndContents')
+    let state                           = {}
+    let state.config                    = a:config
+    let state.contents                  = ""
+    let state.choice                    = candidates.choice
+    let state.possible                  = candidates.possible
+    let state.hint                      = candidates.hint
+    let state.transition                = s:make_ref('transition_state')
+    let state.truncate                  = s:make_ref('truncate')
+    let state.show                      = s:make_ref('show_state')
+    let state.show_prompt_and_contents  = s:make_ref('show_prompt_and_contents')
 
     return state
 endfunction " }}}
 
-function! s:Rubber(displayed) " {{{
+function! s:rubber(displayed) " {{{
     return "\r" . substitute(a:displayed, '.', ' ', 'g') . "\r"
 endfunction! " }}}
 
-function! s:WithoutLastChar(s) " {{{
+function! s:without_last_char(s) " {{{
     return substitute(a:s, '\v.$', '', '')
 endfunction " }}}
 
-function! s:Cancel(state, key) " {{{
+function! s:cancel(state, key) " {{{
     return {}
 endfunction " }}}
 
-function! s:Accept(state, key) " {{{
+function! s:accept(state, key) " {{{
     return {'result': a:state.choice}
 endfunction " }}}
 
-function! s:UnixLineDiscard(state, key) " {{{
-    return {'state': a:state.Transition('')}
+function! s:unix_line_discard(state, key) " {{{
+    return {'state': a:state.transition('')}
 endfunction " }}}
 
-function! s:UnixWordRubout(state, key) " {{{
-    return {'state': a:state.Transition(s:WithoutLastWord(a:state.contents))}
+function! s:unix_word_rubout(state, key) " {{{
+    return {'state': a:state.transition(s:without_last_word(a:state.contents))}
 endfunction " }}}
 
-function! s:Nop(state, key) " {{{
+function! s:nop(state, key) " {{{
     return {'state': a:state}
 endfunction " }}}
 
-function! s:BackwardDeleteChar(state, key) " {{{
+function! s:backward_delete_char(state, key) " {{{
     if empty(a:state.contents)
         return {}
     else
-        return {'state': a:state.Transition(s:WithoutLastChar(a:state.contents))}
+        return {'state': a:state.transition(s:without_last_char(a:state.contents))}
     endif
 endfunction " }}}
 
-function! s:SelfInsert(state, key) " {{{
-    return {'state': a:state.Transition(a:state.contents . a:key)}
+function! s:self_insert(state, key) " {{{
+    return {'state': a:state.transition(a:state.contents . a:key)}
 endfunction " }}}
 
-function! s:SID() " {{{
-    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+function! s:get_script_id() " {{{
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_get_script_id$')
 endfun " }}}
 
-let s:sid = s:SID()
+let s:script_id = s:get_script_id()
 
-function! s:MakeRef(name) " {{{
-    return function(printf('<SNR>%s_%s', s:sid, a:name))
+function! s:make_ref(name) " {{{
+    return function(printf('<SNR>%s_%s', s:script_id, a:name))
 endfunction " }}}
 
 let s:transition_from_key =
-    \{ 'CTRL-@': s:MakeRef('Nop')
-    \, 'CTRL-A': s:MakeRef('Nop')
-    \, 'CTRL-B': s:MakeRef('Nop')
-    \, 'CTRL-C': s:MakeRef('Nop')
-    \, 'CTRL-D': s:MakeRef('Nop')
-    \, 'CTRL-E': s:MakeRef('Nop')
-    \, 'CTRL-F': s:MakeRef('Nop')
-    \, 'CTRL-G': s:MakeRef('Nop')
-    \, 'CTRL-H': s:MakeRef('BackwardDeleteChar')
-    \, 'CTRL-I': s:MakeRef('Nop')
-    \, 'CTRL-J': s:MakeRef('Nop')
-    \, 'CTRL-K': s:MakeRef('Nop')
-    \, 'CTRL-L': s:MakeRef('Nop')
-    \, 'CTRL-M': s:MakeRef('Accept')
-    \, 'CTRL-N': s:MakeRef('Nop')
-    \, 'CTRL-P': s:MakeRef('Nop')
-    \, 'CTRL-Q': s:MakeRef('Nop')
-    \, 'CTRL-R': s:MakeRef('Nop')
-    \, 'CTRL-S': s:MakeRef('Nop')
-    \, 'CTRL-T': s:MakeRef('Nop')
-    \, 'CTRL-U': s:MakeRef('UnixLineDiscard')
-    \, 'CTRL-V': s:MakeRef('Nop')
-    \, 'CTRL-W': s:MakeRef('UnixWordRubout')
-    \, 'CTRL-X': s:MakeRef('Nop')
-    \, 'CTRL-Y': s:MakeRef('Nop')
-    \, 'CTRL-Z': s:MakeRef('Nop')
-    \, 'CTRL-[': s:MakeRef('Cancel')
-    \, 'CTRL-\': s:MakeRef('Nop')
-    \, 'CTRL-]': s:MakeRef('Nop')
-    \, 'CTRL-^': s:MakeRef('Nop')
-    \, 'CTRL-_': s:MakeRef('Nop')
-    \, 'CTRL-?': s:MakeRef('Nop')
-    \, ' ': s:MakeRef('SelfInsert')
-    \, '!': s:MakeRef('SelfInsert')
-    \, '"': s:MakeRef('SelfInsert')
-    \, '#': s:MakeRef('SelfInsert')
-    \, '$': s:MakeRef('SelfInsert')
-    \, '%': s:MakeRef('SelfInsert')
-    \, '&': s:MakeRef('SelfInsert')
-    \, "'": s:MakeRef('SelfInsert')
-    \, "(": s:MakeRef('SelfInsert')
-    \, ")": s:MakeRef('SelfInsert')
-    \, "*": s:MakeRef('SelfInsert')
-    \, "+": s:MakeRef('SelfInsert')
-    \, ",": s:MakeRef('SelfInsert')
-    \, "-": s:MakeRef('SelfInsert')
-    \, ".": s:MakeRef('SelfInsert')
-    \, "/": s:MakeRef('SelfInsert')
-    \, "0": s:MakeRef('SelfInsert')
-    \, "1": s:MakeRef('SelfInsert')
-    \, "2": s:MakeRef('SelfInsert')
-    \, "3": s:MakeRef('SelfInsert')
-    \, "4": s:MakeRef('SelfInsert')
-    \, "5": s:MakeRef('SelfInsert')
-    \, "6": s:MakeRef('SelfInsert')
-    \, "7": s:MakeRef('SelfInsert')
-    \, "8": s:MakeRef('SelfInsert')
-    \, "9": s:MakeRef('SelfInsert')
-    \, ":": s:MakeRef('SelfInsert')
-    \, ";": s:MakeRef('SelfInsert')
-    \, "<": s:MakeRef('SelfInsert')
-    \, "=": s:MakeRef('SelfInsert')
-    \, ">": s:MakeRef('SelfInsert')
-    \, "?": s:MakeRef('SelfInsert')
-    \, "@": s:MakeRef('SelfInsert')
+    \{ 'CTRL-@': s:make_ref('nop')
+    \, 'CTRL-A': s:make_ref('nop')
+    \, 'CTRL-B': s:make_ref('nop')
+    \, 'CTRL-C': s:make_ref('nop')
+    \, 'CTRL-D': s:make_ref('nop')
+    \, 'CTRL-E': s:make_ref('nop')
+    \, 'CTRL-F': s:make_ref('nop')
+    \, 'CTRL-G': s:make_ref('nop')
+    \, 'CTRL-H': s:make_ref('backward_delete_char')
+    \, 'CTRL-I': s:make_ref('nop')
+    \, 'CTRL-J': s:make_ref('nop')
+    \, 'CTRL-K': s:make_ref('nop')
+    \, 'CTRL-L': s:make_ref('nop')
+    \, 'CTRL-M': s:make_ref('accept')
+    \, 'CTRL-N': s:make_ref('nop')
+    \, 'CTRL-P': s:make_ref('nop')
+    \, 'CTRL-Q': s:make_ref('nop')
+    \, 'CTRL-R': s:make_ref('nop')
+    \, 'CTRL-S': s:make_ref('nop')
+    \, 'CTRL-T': s:make_ref('nop')
+    \, 'CTRL-U': s:make_ref('unix_line_discard')
+    \, 'CTRL-V': s:make_ref('nop')
+    \, 'CTRL-W': s:make_ref('unix_word_rubout')
+    \, 'CTRL-X': s:make_ref('nop')
+    \, 'CTRL-Y': s:make_ref('nop')
+    \, 'CTRL-Z': s:make_ref('nop')
+    \, 'CTRL-[': s:make_ref('cancel')
+    \, 'CTRL-\': s:make_ref('nop')
+    \, 'CTRL-]': s:make_ref('nop')
+    \, 'CTRL-^': s:make_ref('nop')
+    \, 'CTRL-_': s:make_ref('nop')
+    \, 'CTRL-?': s:make_ref('nop')
+    \, ' ': s:make_ref('self_insert')
+    \, '!': s:make_ref('self_insert')
+    \, '"': s:make_ref('self_insert')
+    \, '#': s:make_ref('self_insert')
+    \, '$': s:make_ref('self_insert')
+    \, '%': s:make_ref('self_insert')
+    \, '&': s:make_ref('self_insert')
+    \, "'": s:make_ref('self_insert')
+    \, "(": s:make_ref('self_insert')
+    \, ")": s:make_ref('self_insert')
+    \, "*": s:make_ref('self_insert')
+    \, "+": s:make_ref('self_insert')
+    \, ",": s:make_ref('self_insert')
+    \, "-": s:make_ref('self_insert')
+    \, ".": s:make_ref('self_insert')
+    \, "/": s:make_ref('self_insert')
+    \, "0": s:make_ref('self_insert')
+    \, "1": s:make_ref('self_insert')
+    \, "2": s:make_ref('self_insert')
+    \, "3": s:make_ref('self_insert')
+    \, "4": s:make_ref('self_insert')
+    \, "5": s:make_ref('self_insert')
+    \, "6": s:make_ref('self_insert')
+    \, "7": s:make_ref('self_insert')
+    \, "8": s:make_ref('self_insert')
+    \, "9": s:make_ref('self_insert')
+    \, ":": s:make_ref('self_insert')
+    \, ";": s:make_ref('self_insert')
+    \, "<": s:make_ref('self_insert')
+    \, "=": s:make_ref('self_insert')
+    \, ">": s:make_ref('self_insert')
+    \, "?": s:make_ref('self_insert')
+    \, "@": s:make_ref('self_insert')
     \}
 
-function! s:GetLineCustom(config) " {{{
-    let state = s:MakeState(a:config)
+function! s:get_line_custom(config) " {{{
+    let state = s:make_state(a:config)
     if state == {}
         echon a:config.empty
         return {}
     endif
 
-    let displayed = state.Show()
-    echon displayed . "\r" . state.ShowPromptAndContents()
+    let displayed = state.show()
+    echon displayed . "\r" . state.show_prompt_and_contents()
 
     while 1
         let key = getchar()
@@ -295,18 +295,18 @@ function! s:GetLineCustom(config) " {{{
         if type(key) == type(0)
             if has_key(s:key_from_int, key)
                 let name = s:key_from_int[key]
-                let Trans = get(state.config.transitions, name, s:MakeRef('SelfInsert'))
+                let Trans = get(state.config.transitions, name, s:make_ref('self_insert'))
                 let result = call(Trans, [state, name])
             else
                 let name = ''
                 " Just insert unknown keys --- this is so esp. for regional characters
                 let new_contents = state.contents . nr2char(key)
-                let result = {'state': state.Transition(new_contents)}
+                let result = {'state': state.transition(new_contents)}
             endif
         elseif type(key) == type("")
             if has_key(s:key_from_str, key)
                 let name = s:key_from_str[key]
-                let Trans = get(state.config.transitions, name, s:MakeRef('SelfInsert'))
+                let Trans = get(state.config.transitions, name, s:make_ref('self_insert'))
                 let result = call(Trans, [state, name])
             else
                 let name = ''
@@ -317,31 +317,31 @@ function! s:GetLineCustom(config) " {{{
         endif
 
         if result == {}
-            echon s:Rubber(displayed)
+            echon s:rubber(displayed)
             return {'key': name}
         elseif has_key(result, 'result')
-            echon s:Rubber(displayed)
+            echon s:rubber(displayed)
             return {'value': result.result, 'key': name}
         elseif has_key(result, 'state')
             let state = result.state
         elseif has_key(result, 'final')
-            echon s:Rubber(displayed)
-            echon state.Truncate(result.final)
+            echon s:rubber(displayed)
+            echon state.truncate(result.final)
             return {'key': name}
         else
             throw 'getline: Incorrect key handler return value'
         endif
 
         let previous = displayed
-        let displayed = state.Show()
+        let displayed = state.show()
         if displayed !=# previous
-            echon s:Rubber(displayed)
-            echon displayed . "\r" . state.ShowPromptAndContents()
+            echon s:rubber(displayed)
+            echon displayed . "\r" . state.show_prompt_and_contents()
         endif
     endwhile
 endfunction " }}}
 
-function! getline#GetLineReactivelyOverrideKeys(callback, key_handlers) " {{{
+function! getline#get_line_reactively_override_keys(callback, key_handlers) " {{{
     let config = {}
 
     if has('unix') && (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8')
@@ -360,19 +360,19 @@ function! getline#GetLineReactivelyOverrideKeys(callback, key_handlers) " {{{
     let merged = extend(copy(s:transition_from_key), a:key_handlers)
     let config['transitions'] = merged
 
-    return s:GetLineCustom(config)
+    return s:get_line_custom(config)
 endfunction " }}}
 
-function! getline#GetLineReactively(callback) " {{{
-    return getline#GetLineReactivelyOverrideKeys(a:callback, s:transition_from_key)
+function! getline#get_line_reactively(callback) " {{{
+    return getline#get_line_reactively_orderride_keys(a:callback, s:transition_from_key)
 endfunction " }}}
 
-function! s:IdCallback(input) " {{{
+function! s:id_callback(input) " {{{
     return {'choice': a:input}
 endfunction " }}}
 
-function! getline#GetLine() " {{{
-    return get(getline#GetLineReactively(function('s:IdCallback')), 'value', '')
+function! getline#get_line() " {{{
+    return get(getline#get_line_reactively(function('s:id_callback')), 'value', '')
 endfunction " }}}
 
 

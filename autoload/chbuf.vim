@@ -257,7 +257,7 @@ function! s:guarded_space(state, key) " {{{
         return {'state': a:state}
     endif
 
-    return {'state': a:state.Transition(a:state.contents . a:key)}
+    return {'state': a:state.transition(a:state.contents . a:key)}
 endfunction " }}}
 
 let s:key_handlers =
@@ -277,7 +277,7 @@ function! s:prompt(buffers) " {{{
     endif
     let w:chbuf_cache = s:shortest_unique_suffixes(w:chbuf_cache)
 
-    let result = getline#GetLineReactivelyOverrideKeys(s:make_ref('get_line_callback'), s:key_handlers)
+    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
 
     unlet w:chbuf_cache
     return result
@@ -330,7 +330,7 @@ function! s:by_len(left, right) " {{{
     return len(a:left) - len(a:right)
 endfunction " }}}
 
-function! s:GoodDirs(path) " {{{
+function! s:good_dirs(path) " {{{
     if a:path == '.'
         return 0
     endif
@@ -347,7 +347,7 @@ endfunction " }}}
 
 function! s:list_glob(glob) " {{{
     let dirs = glob(a:glob, 1, 1)
-    call filter(dirs, 's:GoodDirs(v:val)')
+    call filter(dirs, 's:good_dirs(v:val)')
     call sort(dirs, 's:by_len')
     return dirs
 endfunction " }}}
@@ -378,7 +378,7 @@ endfunction " }}}
 function! s:ch_seg(state, key) " {{{
     call s:safe_chdir(a:state.choice)
     let w:chbuf_cache = s:get_dirs()
-    return {'state': a:state.Transition('')}
+    return {'state': a:state.transition('')}
 endfunction " }}}
 
 function! s:accept_dir(state, key) " {{{
@@ -403,7 +403,7 @@ let s:chdir_key_handlers =
 
 function! chbuf#change_dir() " {{{
     let w:chbuf_cache = s:get_dirs()
-    let result = getline#GetLineReactivelyOverrideKeys(s:make_ref('change_dir_callback'), s:chdir_key_handlers)
+    let result = getline#get_line_reactively_override_keys(s:make_ref('change_dir_callback'), s:chdir_key_handlers)
     unlet w:chbuf_cache
     if !has_key(result, 'value')
         return
