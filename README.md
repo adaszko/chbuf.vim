@@ -1,20 +1,22 @@
-# What is it?
+# chbuf.vim
+
+## What is it?
 
 A way of jumping to loaded buffers, elements of `v:oldfiles` and `:lcd`'ing
 optimised for minimal number of key strokes.
 
-# Status
+## Status
 
 Ready to use.
 
-# Installation
+## Installation
 
 Assuming you have Pathogen up and running:
 
     $ cd ~/.vim/bundle
     $ git clone git://github.com/adaszko/chbuf.vim
 
-# Usage
+## Setup
 
 Just add a mapping of your choice to `.vimrc`, e.g.:
 
@@ -26,15 +28,15 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
 
 Note that functions above respect `ignorecase`, `wildignore` and `suffixes`.
 
-# Bugs
+## Bugs
 
 It's generally slower on Windows.
 
-# To Do
+## To Do
 
  * Write help file
  * Tiny GIF screencast
 
-# License
+## License
 
 BSD3
