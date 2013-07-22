@@ -19,70 +19,70 @@ endif
 
 let s:case_sensitive_file_system = has('unix')
 
-function! s:SID() " {{{
-    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+function! s:get_script_id() " {{{
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_get_script_id$')
 endfun " }}}
 
-let s:sid = s:SID()
+let s:script_id = s:get_script_id()
 
-function! s:MakeRef(name) " {{{
-    return function(printf('<SNR>%s_%s', s:sid, a:name))
+function! s:make_ref(name) " {{{
+    return function(printf('<SNR>%s_%s', s:script_id, a:name))
 endfunction " }}}
 
-function! s:SwitchToNumber() dict " {{{
+function! s:switch_to_number() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
-function! s:NumberChoosable() dict " {{{
+function! s:is_number_choosable() dict " {{{
     return 1
 endfunction " }}}
 
-function! s:BufferFromNumber(number, name) " {{{
+function! s:buffer_from_number(number, name) " {{{
     let path = expand('#' . a:number . ':p')
-    return { 'number':      a:number
-          \, 'path':        path
-          \, 'name':        a:name
-          \, 'switch':      s:MakeRef('SwitchToNumber')
-          \, 'IsChoosable': s:MakeRef('NumberChoosable')
+    return { 'number':          a:number
+          \, 'path':            path
+          \, 'name':            a:name
+          \, 'switch':          s:make_ref('switch_to_number')
+          \, 'is_choosable':    s:make_ref('is_number_choosable')
           \}
 endfunction " }}}
 
-function! s:SwitchToPath() dict " {{{
+function! s:switch_to_path() dict " {{{
     execute 'silent' 'edit' self.path
 endfunction " }}}
 
-function! s:PathChoosable() dict " {{{
+function! s:path_choosable() dict " {{{
     return filereadable(self.path)
 endfunction " }}}
 
-function! s:BufferFromPath(path) " {{{
+function! s:buffer_from_path(path) " {{{
     return { 'path':        expand(a:path)
-          \, 'switch':      s:MakeRef('SwitchToPath')
-          \, 'IsChoosable': s:MakeRef('PathChoosable')
+          \, 'switch':      s:make_ref('switch_to_path')
+          \, 'is_choosable': s:make_ref('path_choosable')
           \}
 endfunction " }}}
 
-function! s:BufferFromRelativePath(relative) " {{{
+function! s:buffer_from_relative_path(relative) " {{{
     return { 'relative':    a:relative
           \, 'path':        join([getcwd(), a:relative], s:unescaped_path_seg_sep)
-          \, 'switch':      s:MakeRef('SwitchToPath')
-          \, 'IsChoosable': s:MakeRef('PathChoosable')
+          \, 'switch':      s:make_ref('switch_to_path')
+          \, 'is_choosable': s:make_ref('path_choosable')
           \}
 endfunction " }}}
 
-function! s:GetGlobFiles() " {{{
+function! s:get_glob_files() " {{{
     let paths = glob('**', 0, 1)
     call filter(paths, 'getftype(v:val) =~# "\\v(file|link)"')
-    call map(paths, 's:BufferFromRelativePath(v:val)')
+    call map(paths, 's:buffer_from_relative_path(v:val)')
     return paths
 endfunction " }}}
 
-function! s:GetOldFiles(ignored_pattern) " {{{
-    let result = map(copy(v:oldfiles), 's:BufferFromPath(v:val)')
+function! s:get_old_files(ignored_pattern) " {{{
+    let result = map(copy(v:oldfiles), 's:buffer_from_path(v:val)')
     return filter(result, "v:val.path !~ '" . escape(a:ignored_pattern, "'") . "'")
 endfunction " }}}
 
-function! s:GetBuffers(ignored_pattern) " {{{
+function! s:get_buffers(ignored_pattern) " {{{
     let result = []
 
     for buffer in range(1, bufnr('$'))
@@ -106,7 +106,7 @@ function! s:GetBuffers(ignored_pattern) " {{{
             continue
         endif
 
-        let buf = s:BufferFromNumber(buffer, name)
+        let buf = s:buffer_from_number(buffer, name)
         if buf.path =~ a:ignored_pattern
             continue
         endif
@@ -117,7 +117,7 @@ function! s:GetBuffers(ignored_pattern) " {{{
     return result
 endfunction " }}}
 
-function! s:UniqPaths(buffers) " {{{
+function! s:uniq_paths(buffers) " {{{
     let unique = {}
 
     for buf in a:buffers
@@ -135,7 +135,7 @@ function! s:UniqPaths(buffers) " {{{
     return values(unique)
 endfunction " }}}
 
-function! s:SetUniqueSuffixes(node, cand, accum) " {{{
+function! s:set_unique_suffixes(node, cand, accum) " {{{
     let children = keys(a:node)
 
     let cand = copy(a:cand)
@@ -153,21 +153,21 @@ function! s:SetUniqueSuffixes(node, cand, accum) " {{{
             let buf['suffix'] = join(reverse(cand), s:unescaped_path_seg_sep)
         elseif len(children) == 1
             call add(accum, seg)
-            call s:SetUniqueSuffixes(val, cand, accum)
+            call s:set_unique_suffixes(val, cand, accum)
         else
             call add(cand, seg)
-            call s:SetUniqueSuffixes(val, cand, accum)
+            call s:set_unique_suffixes(val, cand, accum)
             call remove(cand, -1)
         endif
         unlet val
     endfor
 endfunction " }}}
 
-function! s:BySuffixLen(left, right) " {{{
+function! s:by_suffix_len(left, right) " {{{
     return strlen(a:left.suffix) - strlen(a:right.suffix)
 endfunction " }}}
 
-function! s:ShortestUniqueSuffixes(buffers) " {{{
+function! s:shortest_unique_suffixes(buffers) " {{{
     let trie = {}
     for buf in a:buffers
         " Paths are allowed to have multiple adjacent segment separators
@@ -188,12 +188,12 @@ function! s:ShortestUniqueSuffixes(buffers) " {{{
         let node[seg] = [buf]
     endfor
 
-    call s:SetUniqueSuffixes(trie, [], [])
-    call sort(a:buffers, 's:BySuffixLen')
+    call s:set_unique_suffixes(trie, [], [])
+    call sort(a:buffers, 's:by_suffix_len')
     return a:buffers
 endfunction " }}}
 
-function! s:FilterMatching(input, buffers) " {{{
+function! s:filter_matching(input, buffers) " {{{
     let result = a:buffers
 
     if &ignorecase
@@ -209,7 +209,7 @@ function! s:FilterMatching(input, buffers) " {{{
     return result
 endfunction " }}}
 
-function! s:RenderHint(buffers) " {{{
+function! s:render_hint(buffers) " {{{
     if len(a:buffers) == 1
         return a:buffers[0].path
     else
@@ -217,34 +217,34 @@ function! s:RenderHint(buffers) " {{{
     endif
 endfunction " }}}
 
-function! s:GetLineCallback(input) " {{{
-    let matching = s:FilterMatching(a:input, copy(w:chbuf_cache))
+function! s:get_line_callback(input) " {{{
+    let matching = s:filter_matching(a:input, copy(w:chbuf_cache))
 
     if len(matching) == 0
         return {}
     endif
 
-    return {'choice': matching[0], 'possible': matching, 'hint': s:RenderHint(matching)}
+    return {'choice': matching[0], 'possible': matching, 'hint': s:render_hint(matching)}
 endfunction " }}}
 
-function! s:FilterUnchoosable(buffers) " {{{
-    return filter(a:buffers, 'v:val.IsChoosable()')
+function! s:filter_unchoosable(buffers) " {{{
+    return filter(a:buffers, 'v:val.is_choosable()')
 endfunction " }}}
 
-function! s:Accept(state, key) " {{{
-    if a:state.choice.IsChoosable()
+function! s:accept(state, key) " {{{
+    if a:state.choice.is_choosable()
         return {'result': a:state.choice}
     endif
 
     return {'state': a:state}
 endfunction " }}}
 
-function! s:Yank(state, key) " {{{
+function! s:yank(state, key) " {{{
     call setreg(v:register, a:state.choice.path)
     return {'final': a:state.config.separator . a:state.choice.path}
 endfunction " }}}
 
-function! s:GuardedSpace(state, key) " {{{
+function! s:guarded_space(state, key) " {{{
     if len(a:state.contents) == 0
         return {'state': a:state}
     endif
@@ -261,29 +261,29 @@ function! s:GuardedSpace(state, key) " {{{
 endfunction " }}}
 
 let s:key_handlers =
-    \{ 'CTRL-S': s:MakeRef('Accept')
-    \, 'CTRL-V': s:MakeRef('Accept')
-    \, 'CTRL-T': s:MakeRef('Accept')
-    \, 'CTRL-I': s:MakeRef('Accept')
-    \, 'CTRL-M': s:MakeRef('Accept')
-    \, 'CTRL-Y': s:MakeRef('Yank')
-    \, ' ': s:MakeRef('GuardedSpace')
+    \{ 'CTRL-S': s:make_ref('accept')
+    \, 'CTRL-V': s:make_ref('accept')
+    \, 'CTRL-T': s:make_ref('accept')
+    \, 'CTRL-I': s:make_ref('accept')
+    \, 'CTRL-M': s:make_ref('accept')
+    \, 'CTRL-Y': s:make_ref('yank')
+    \, ' ': s:make_ref('guarded_space')
     \}
 
-function! s:Prompt(buffers) " {{{
+function! s:prompt(buffers) " {{{
     let w:chbuf_cache = a:buffers
     if !has('win32')
-        let w:chbuf_cache = s:FilterUnchoosable(w:chbuf_cache)
+        let w:chbuf_cache = s:filter_unchoosable(w:chbuf_cache)
     endif
-    let w:chbuf_cache = s:ShortestUniqueSuffixes(w:chbuf_cache)
+    let w:chbuf_cache = s:shortest_unique_suffixes(w:chbuf_cache)
 
-    let result = getline#GetLineReactivelyOverrideKeys(s:MakeRef('GetLineCallback'), s:key_handlers)
+    let result = getline#GetLineReactivelyOverrideKeys(s:make_ref('get_line_callback'), s:key_handlers)
 
     unlet w:chbuf_cache
     return result
 endfunction " }}}
 
-function! s:Change(result) " {{{
+function! s:change(result) " {{{
     if !has_key(a:result, 'value')
         return
     endif
@@ -294,7 +294,7 @@ function! s:Change(result) " {{{
         call buffer.switch()
     elseif key == 'CTRL-I'
         call buffer.switch()
-        call s:SafeChDir(expand("%:h"))
+        call s:safe_chdir(expand("%:h"))
     elseif key == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
@@ -307,30 +307,26 @@ function! s:Change(result) " {{{
     endif
 endfunction " }}}
 
-function! s:ChooseInteractively(possibilities) " {{{
-    return s:Change(s:Prompt(a:possibilities))
+function! s:choose_path_interactively(path_objects) " {{{
+    return s:change(s:prompt(a:path_objects))
 endfunction " }}}
 
-function! chbuf#ChangeBuffer(ignored_pattern) " {{{
-    return s:ChooseInteractively(s:GetBuffers(a:ignored_pattern))
+function! chbuf#change_buffer(ignored_pattern) " {{{
+    return s:choose_path_interactively(s:get_buffers(a:ignored_pattern))
 endfunction " }}}
 
-function! chbuf#ChangeOldFile(ignored_pattern) " {{{
-    return s:ChooseInteractively(s:GetOldFiles(ignored_pattern))
+function! chbuf#change_buffer_old_file(ignored_pattern) " {{{
+    let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
+    return s:choose_path_interactively(s:uniq_paths(buffers))
 endfunction " }}}
 
-function! chbuf#ChangeBufferOldFile(ignored_pattern) " {{{
-    let buffers = extend(s:GetBuffers(a:ignored_pattern), s:GetOldFiles(a:ignored_pattern))
-    return s:ChooseInteractively(s:UniqPaths(buffers))
-endfunction " }}}
-
-function! chbuf#ChangeFile() " {{{
-    return s:ChooseInteractively(s:GetGlobFiles())
+function! chbuf#change_file() " {{{
+    return s:choose_path_interactively(s:get_glob_files())
 endfunction " }}}
 " }}}
 
 " {{{ Data Source: Directories
-function! s:ByLen(left, right) " {{{
+function! s:by_len(left, right) " {{{
     return len(a:left) - len(a:right)
 endfunction " }}}
 
@@ -349,19 +345,19 @@ function! s:GoodDirs(path) " {{{
     endif
 endfunction " }}}
 
-function! s:ListGlob(glob) " {{{
+function! s:list_glob(glob) " {{{
     let dirs = glob(a:glob, 1, 1)
     call filter(dirs, 's:GoodDirs(v:val)')
-    call sort(dirs, 's:ByLen')
+    call sort(dirs, 's:by_len')
     return dirs
 endfunction " }}}
 
-function! s:GetDirs() " {{{
-    let dirs = s:ListGlob('*')
-    return extend(dirs, s:ListGlob('.*'))
+function! s:get_dirs() " {{{
+    let dirs = s:list_glob('*')
+    return extend(dirs, s:list_glob('.*'))
 endfunction " }}}
 
-function! s:ChangeDirCallback(input) " {{{
+function! s:change_dir_callback(input) " {{{
     let dirs = copy(w:chbuf_cache)
 
     for sub in split(a:input)
@@ -375,46 +371,46 @@ function! s:ChangeDirCallback(input) " {{{
     return {'choice': dirs[0], 'possible': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
-function! s:SafeChDir(dir) " {{{
+function! s:safe_chdir(dir) " {{{
     execute 'lcd' escape(a:dir, ' ')
 endfunction " }}}
 
-function! s:ChSeg(state, key) " {{{
-    call s:SafeChDir(a:state.choice)
-    let w:chbuf_cache = s:GetDirs()
+function! s:ch_seg(state, key) " {{{
+    call s:safe_chdir(a:state.choice)
+    let w:chbuf_cache = s:get_dirs()
     return {'state': a:state.Transition('')}
 endfunction " }}}
 
-function! s:AcceptDir(state, key) " {{{
+function! s:accept_dir(state, key) " {{{
     return {'result': a:state.choice}
 endfunction " }}}
 
-function! s:YankDir(state, key) " {{{
+function! s:yank_dir(state, key) " {{{
     let full_path = getcwd() . s:escaped_path_seg_sep . a:state.choice
     call setreg(v:register, full_path)
     return {'final': a:state.config.separator . full_path}
 endfunction " }}}
 
 let s:chdir_key_handlers =
-    \{ 'CTRL-I': s:MakeRef('ChSeg')
-    \, 'CTRL-S': s:MakeRef('AcceptDir')
-    \, 'CTRL-V': s:MakeRef('AcceptDir')
-    \, 'CTRL-T': s:MakeRef('AcceptDir')
-    \, 'CTRL-M': s:MakeRef('AcceptDir')
-    \, 'CTRL-Y': s:MakeRef('YankDir')
-    \, ' ': s:MakeRef('GuardedSpace')
+    \{ 'CTRL-I': s:make_ref('ch_seg')
+    \, 'CTRL-S': s:make_ref('accept_dir')
+    \, 'CTRL-V': s:make_ref('accept_dir')
+    \, 'CTRL-T': s:make_ref('accept_dir')
+    \, 'CTRL-M': s:make_ref('accept_dir')
+    \, 'CTRL-Y': s:make_ref('yank_dir')
+    \, ' ': s:make_ref('guarded_space')
     \}
 
-function! chbuf#ChangeDir() " {{{
-    let w:chbuf_cache = s:GetDirs()
-    let result = getline#GetLineReactivelyOverrideKeys(s:MakeRef('ChangeDirCallback'), s:chdir_key_handlers)
+function! chbuf#change_dir() " {{{
+    let w:chbuf_cache = s:get_dirs()
+    let result = getline#GetLineReactivelyOverrideKeys(s:make_ref('change_dir_callback'), s:chdir_key_handlers)
     unlet w:chbuf_cache
     if !has_key(result, 'value')
         return
     endif
 
     if result.key == 'CTRL-M'
-        call s:SafeChDir(result.value)
+        call s:safe_chdir(result.value)
     elseif result.key == 'CTRL-T'
         execute 'silent' 'tabedit' result.value
     elseif result.key == 'CTRL-S'
@@ -426,7 +422,7 @@ endfunction " }}}
 " }}}
 
 " {{{ Data Source: External Tools
-function! chbuf#SpotlightQueryCompletion(arglead, cmdline, cursorpos) " {{{
+function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
     " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html#//apple_ref/doc/uid/TP40001849-CJBEJBHH
     let keywords =
         \[ 'kMDItemFSName'
@@ -447,13 +443,13 @@ function! chbuf#SpotlightQueryCompletion(arglead, cmdline, cursorpos) " {{{
     return join(keywords, "\n")
 endfunction " }}}
 
-function! s:QuerySpotlight(query) " {{{
+function! s:query_spotlight(query) " {{{
     let paths = split(system(printf("mdfind -onlyin %s '%s'", shellescape(getcwd()), escape(a:query, "'"))), "\n")
-    return map(paths, 's:BufferFromPath(v:val)')
+    return map(paths, 's:buffer_from_path(v:val)')
 endfunction " }}}
 
-function! chbuf#ChangeQuerySpotlight(query) " {{{
-    return s:ChooseInteractively(s:QuerySpotlight(a:query))
+function! chbuf#change_file_spotlight(query) " {{{
+    return s:choose_path_interactively(s:query_spotlight(a:query))
 endfunction " }}}
 " }}}
 

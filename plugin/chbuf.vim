@@ -10,7 +10,7 @@ set cpo&vim
 
 
 if has('mac')
-    command! -nargs=+ -complete=custom,chbuf#SpotlightQueryCompletion Spotlight call chbuf#ChangeQuerySpotlight("<args>")
+    command! -nargs=+ -complete=custom,chbuf#spotlight_query_completion Spotlight call chbuf#change_file_spotlight("<args>")
 endif
 
 
