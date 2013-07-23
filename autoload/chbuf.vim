@@ -56,9 +56,9 @@ function! s:path_choosable() dict " {{{
 endfunction " }}}
 
 function! s:buffer_from_path(path) " {{{
-    return { 'path':        expand(a:path)
-          \, 'switch':      s:make_ref('switch_to_path')
-          \, 'is_choosable': s:make_ref('path_choosable')
+    return { 'path':            expand(a:path)
+          \, 'switch':          s:make_ref('switch_to_path')
+          \, 'is_choosable':    s:make_ref('path_choosable')
           \}
 endfunction " }}}
 
@@ -78,7 +78,13 @@ function! s:get_glob_files() " {{{
 endfunction " }}}
 
 function! s:get_old_files(ignored_pattern) " {{{
-    let result = map(copy(v:oldfiles), 's:buffer_from_path(v:val)')
+    let result = map(copy(v:oldfiles), "fnamemodify(v:val, ':p')")
+    let result = map(result, 's:buffer_from_path(v:val)')
+
+    if !a:ignored_pattern
+        return result
+    endif
+
     return filter(result, "v:val.path !~ '" . escape(a:ignored_pattern, "'") . "'")
 endfunction " }}}
 
