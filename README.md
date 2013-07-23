@@ -18,15 +18,15 @@ Assuming you have Pathogen up and running:
 
 ## Setup
 
-Just add a mapping of your choice to `.vimrc`, e.g.:
+Simply add a mapping of your choice to `.vimrc`, e.g.:
 
-    let g:chbuf_ignore_pattern = '\v\C(^fugitive://|^/usr/local/Cellar/macvim/|^/private/var/folders/|/.git/COMMIT_EDITMSG$)'
-    noremap <silent> <Leader>b :call chbuf#change_buffer(g:chbuf_ignore_pattern)<CR>
-    noremap <silent> <Leader>B :call chbuf#change_mixed(g:chbuf_ignore_pattern)<CR>
-    noremap <silent> <Leader>f :call chbuf#change_file()<CR>
-    noremap <silent> <Leader>c :call chbuf#change_directory()<CR>
+    noremap <silent> <Leader>b :ChangeBuffer<CR>
+    noremap <silent> <Leader>B :ChangeMixed<CR>
+    noremap <silent> <Leader>f :ChangeFile<CR>
+    noremap <silent> <Leader>c :ChangeDirectory<CR>
 
-Note that functions above respect `ignorecase`, `wildignore` and `suffixes`.
+Note that functions above respect `ignorecase`, `wildignore` and `suffixes`
+where appropriate.
 
 ## Bugs
 
@@ -34,7 +34,8 @@ It's generally slower on Windows.
 
 ## To Do
 
- * Write help file
+ * getline.txt help file
+ * chbuf.txt help file
  * Tiny GIF screencast
 
 ## License

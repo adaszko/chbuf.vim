@@ -113,7 +113,7 @@ function! s:get_buffers(ignored_pattern) " {{{
         endif
 
         let buf = s:buffer_from_number(buffer, name)
-        if buf.path =~ a:ignored_pattern
+        if buf.path && buf.path =~ a:ignored_pattern
             continue
         endif
 
@@ -449,13 +449,22 @@ function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
     return join(keywords, "\n")
 endfunction " }}}
 
-function! s:query_spotlight(query) " {{{
+function! s:query_spotlight_custom(query) " {{{
     let paths = split(system(printf("mdfind -onlyin %s '%s'", shellescape(getcwd()), escape(a:query, "'"))), "\n")
     return map(paths, 's:buffer_from_path(v:val)')
 endfunction " }}}
 
-function! chbuf#change_file_spotlight(query) " {{{
-    return s:choose_path_interactively(s:query_spotlight(a:query))
+function! chbuf#change_file_spotlight_custom(query) " {{{
+    return s:choose_path_interactively(s:query_spotlight_custom(a:query))
+endfunction " }}}
+
+function! s:query_spotlight(pattern) " {{{
+    let query = printf('kMDItemContentTypeTree == public.plain-text && kMDItemFSName == "%s"', escape(a:pattern, '"'))
+    return s:query_spotlight_custom(query)
+endfunction " }}}
+
+function! chbuf#change_file_spotlight(pattern) " {{{
+    return s:choose_path_interactively(s:query_spotlight(a:pattern))
 endfunction " }}}
 " }}}
 
