@@ -24,7 +24,7 @@ Just add a mapping of your choice to `.vimrc`, e.g.:
     noremap <silent> <Leader>b :call chbuf#change_buffer(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>B :call chbuf#change_mixed(g:chbuf_ignore_pattern)<CR>
     noremap <silent> <Leader>f :call chbuf#change_file()<CR>
-    noremap <silent> <Leader>c :call chbuf#change_dir()<CR>
+    noremap <silent> <Leader>c :call chbuf#change_directory()<CR>
 
 Note that functions above respect `ignorecase`, `wildignore` and `suffixes`.
 

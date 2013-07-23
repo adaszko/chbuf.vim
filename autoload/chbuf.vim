@@ -407,7 +407,7 @@ let s:chdir_key_handlers =
     \, ' ': s:make_ref('guarded_space')
     \}
 
-function! chbuf#change_dir() " {{{
+function! chbuf#change_directory() " {{{
     let w:chbuf_cache = s:get_dirs()
     let result = getline#get_line_reactively_override_keys(s:make_ref('change_dir_callback'), s:chdir_key_handlers)
     unlet w:chbuf_cache
