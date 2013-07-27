@@ -102,6 +102,11 @@ CTRL-Y							    *chbuf-CTRL-Y*
 
     Copies the full path of current selection into v:register.
 
+CTRL-D							    *chbuf-CTRL-D*
+
+    Issues |:bdelete| on current choice and returns to normal mode.  Does
+    nothing for choices that are not loaded buffers.
+
 CTRL-M							    *chbuf-CTRL-M*
 <CR>							    *chbuf-<CR>*
 
