@@ -1,0 +1,141 @@
+*getline.txt*		Interactive line input library
+=============================================================================
+
+INTRODUCTION					    *getline-intro*
+
+getline is a library that implements generic (reusable), interactive, keyboard
+driven menu.  It does not offer anything of direct value to the Vim user, it
+is only to be used by other scripts.
+
+
+AUTHOR						    *getline-author*
+
+    Adam Szkoda <adaszko@gmail.com>
+
+
+LICENSE						    *getline-license*
+
+    BSD3
+
+
+EXPORTS						    *getline-exports*
+FUNCTIONS					    *getline-functions*
+
+*getline#get_line()* ()
+
+    Simply try executing this:
+
+    :echo getline#get_line()
+
+    to get a feel of what it does.
+
+*getline#get_line_reactively()* ({callback})
+
+    Like |getline#get_line()| but allows you to execute some action after
+    every entered key.
+
+    {callback} is a function called to compute what gets later displayed to the
+    user.  It takes user input as an argument and is expected to return a
+    dictionary of the form:
+
+    {
+	'choice': any type
+	['data': any type,]
+	['hint': string,]
+    }
+
+    Elements in square brackets are optional. 'choice' is an object that is to
+    be returned upon hitting <CR> by the user.  This object isn’t inspected in
+    any way and thus can be of any type.  'data' is also arbitrarily–typed
+    entry that is just passed around by the library and can represent e.g. “a
+    list of possible choices,” though this isn’t enforced in any way. 'hint'
+    is a string that is displayed to the user with the intention of suggesting
+    what can be still chosen and if empty, nothing is displayed.
+
+    Given this, the simplest possible {callback} function can be defined as
+    follows:
+
+    function! id_callback(input)
+	return {'choice': a:input}
+    endfunction
+
+*getline#get_line_reactively_override_keys()* ({callback}, {key_handlers})
+
+    Like |getline#get_line_reactively()| but additional keys may be defined
+    and/or existing redefined.
+
+    The meaning of {callback} is described in |getline#get_line_reactively()|.
+
+    {key_handlers} is a dictionary mapping key names to handler functions.
+    Here’s an example from |chbuf.txt| plugin:
+
+    let s:key_handlers =
+	\{ 'CTRL-S': function('accept')
+	\, 'CTRL-V': function('accept')
+	\, 'CTRL-T': function('accept')
+	\, 'CTRL-I': function('accept')
+	\, 'CTRL-M': function('accept')
+	\, 'CTRL-Y': function('yank')
+	\, ' ': function('guarded_space')
+	\}
+
+    getline architecture is based on a state machine and the purpose of
+    handler functions is making state transitions in reaction to the user
+    input.  Each of handler functions take two arguments: current state and
+    the key name used to trigger the handler.
+
+    Below, are the possible definitions for the above mentioned handler
+    functions.
+
+    function! accept(state, key)
+	return {'result': a:state.choice}
+    endfunction
+
+    accept() simply ends input with whatever is stored in the 'choice'
+    element described in |getline#get_line_reactively()|.
+
+    function! guarded_space(state, key)
+	" Do not allow for space at the beginning of input
+	if len(a:state.contents) == 0
+	    return {'state': a:state}
+	endif
+
+	" Do not allow for input of space several consecutive spaces
+	if a:state.contents =~ '\v\s$'
+	    return {'state': a:state}
+	endif
+
+	" There’s no need to make the filter more restrictive when there’s at
+	" most one choice
+	if len(a:state.data) <= 1
+	    return {'state': a:state}
+	endif
+
+	" Otherwise, allow for input of space
+	return {'state': a:state.transition(a:state.contents . a:key)}
+    endfunction
+
+    guarded_space() is an example of conditional state transition — in three
+    out of four cases it does not perform any transition, meaning that input
+    contents don’t change.  In the fourth (and the last) case, the important
+    state.transition() function is called causing change in what the user
+    sees.
+
+
+CAVEATS						    *getline-caveats*
+
+Due to a lack of knowledge of a better way, getline has to use a weird
+heuristic to calculate width of the window expressed in characters.  It
+computes it by subtracting some fixed value (determined by hand) from the
+value of 'columns' option.  It seems to work pretty well, but as with all
+solutions of this kind, unforeseen troubles may arise.
+
+
+ABOUT						    *getline-about*
+
+For latest version, reporting bugs, etc. see:
+
+    http://github.com/adaszko/chbuf.vim
+
+=============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
