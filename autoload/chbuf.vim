@@ -450,7 +450,7 @@ function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
 endfunction " }}}
 
 function! s:query_spotlight_custom(query) " {{{
-    let paths = split(system(printf("mdfind -onlyin %s '%s'", shellescape(getcwd()), escape(a:query, "'"))), "\n")
+    let paths = split(system(printf("mdfind -onlyin %s %s", shellescape(getcwd()), shellescape(a:query))), "\n")
     return map(paths, 's:buffer_from_path(v:val)')
 endfunction " }}}
 
