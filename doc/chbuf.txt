@@ -116,7 +116,12 @@ CTRL-M							    *chbuf-CTRL-M*
 <CR>							    *chbuf-<CR>*
 
     The behaviour of <CR> is just like |getline-CTRL-M| with the exception
-    that you’re not allowed to select non-existent file.
+    that you’re not allowed to select non-existent file.  Use *chbuf-CTRL-N*
+    to force even if file doesn’t exist.
+
+CTRL-N							    *chbuf-CTRL-N*
+
+    Like *chbuf-CTRL-M* but allows for selection even of non-existent file.
 
 
 CAVEATS							    *chbuf-caveats*

@@ -253,6 +253,10 @@ function! s:accept(state, key) " {{{
         return {'result': a:state.choice}
     endif
 
+    if a:key == 'CTRL-N'
+        return {'result': a:state.choice}
+    endif
+
     return {'state': a:state}
 endfunction " }}}
 
@@ -304,6 +308,7 @@ let s:key_handlers =
     \, 'CTRL-T': s:make_ref('accept')
     \, 'CTRL-I': s:make_ref('accept')
     \, 'CTRL-M': s:make_ref('accept')
+    \, 'CTRL-N': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
     \, 'CTRL-D': s:make_ref('delete')
     \, 'CTRL-K': s:make_ref('kill')
@@ -330,7 +335,7 @@ function! s:change(result) " {{{
     let buffer = a:result.value
     let key = a:result.key
 
-    if key == 'CTRL-M'
+    if key == 'CTRL-M' || key == 'CTRL-N'
         call buffer.switch()
     elseif key == 'CTRL-I'
         call buffer.switch()
