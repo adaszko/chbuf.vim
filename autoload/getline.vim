@@ -113,8 +113,8 @@ function! s:transition_state(new_contents) dict " {{{
     let new_state           = copy(self)
     let new_state.contents  = a:new_contents
     let new_state.choice    = candidates.choice
-    let new_state.possible  = candidates.possible
-    let new_state.hint      = candidates.hint
+    let new_state.data      = get(candidates, 'data', '')
+    let new_state.hint      = get(candidates, 'hint', '')
     return new_state
 endfunction " }}}
 
@@ -151,8 +151,8 @@ function! s:make_state(config) " {{{
     let state.config                    = a:config
     let state.contents                  = ""
     let state.choice                    = candidates.choice
-    let state.possible                  = candidates.possible
-    let state.hint                      = candidates.hint
+    let state.data                      = get(candidates, 'data', '')
+    let state.hint                      = get(candidates, 'hint', '')
     let state.transition                = s:make_ref('transition_state')
     let state.truncate                  = s:make_ref('truncate')
     let state.show                      = s:make_ref('show_state')
@@ -364,7 +364,7 @@ function! getline#get_line_reactively_override_keys(callback, key_handlers) " {{
 endfunction " }}}
 
 function! getline#get_line_reactively(callback) " {{{
-    return getline#get_line_reactively_orderride_keys(a:callback, s:transition_from_key)
+    return getline#get_line_reactively_override_keys(a:callback, s:transition_from_key)
 endfunction " }}}
 
 function! s:id_callback(input) " {{{

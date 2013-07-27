@@ -230,7 +230,7 @@ function! s:get_line_callback(input) " {{{
         return {}
     endif
 
-    return {'choice': matching[0], 'possible': matching, 'hint': s:render_hint(matching)}
+    return {'choice': matching[0], 'data': matching, 'hint': s:render_hint(matching)}
 endfunction " }}}
 
 function! s:filter_unchoosable(buffers) " {{{
@@ -259,7 +259,7 @@ function! s:guarded_space(state, key) " {{{
         return {'state': a:state}
     endif
 
-    if len(a:state.possible) <= 1
+    if len(a:state.data) <= 1
         return {'state': a:state}
     endif
 
@@ -374,7 +374,7 @@ function! s:change_dir_callback(input) " {{{
         return {}
     endif
 
-    return {'choice': dirs[0], 'possible': dirs, 'hint': join(dirs)}
+    return {'choice': dirs[0], 'data': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
 function! s:safe_chdir(dir) " {{{
@@ -428,7 +428,7 @@ endfunction " }}}
 " }}}
 
 " {{{ Data Source: External Tools
-function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
+function! chbuf#spotlight_custom_query_completion(arglead, cmdline, cursorpos) " {{{
     " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html#//apple_ref/doc/uid/TP40001849-CJBEJBHH
     let keywords =
         \[ 'kMDItemFSName'
