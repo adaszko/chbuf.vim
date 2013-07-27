@@ -107,6 +107,11 @@ CTRL-D							    *chbuf-CTRL-D*
     Issues |:bdelete| on current choice and returns to normal mode.  Does
     nothing for choices that are not loaded buffers.
 
+CTRL-K							    *chbuf-CTRL-K*
+
+    Issues |:bdelete| on all choices (!).  Does nothing for choices that are
+    not loaded buffers.
+
 CTRL-M							    *chbuf-CTRL-M*
 <CR>							    *chbuf-<CR>*
 

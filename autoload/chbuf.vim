@@ -278,8 +278,21 @@ function! s:guarded_space(state, key) " {{{
 endfunction " }}}
 
 function! s:delete(state, key) " {{{
+    let path = a:state.choice.path
+
     if a:state.choice.delete()
-        return {}
+        return {'final': printf(":bdelete %s", path)}
+    endif
+
+    return {'state': a:state}
+endfunction " }}}
+
+function! s:kill(state, key) " {{{
+    let results = filter(copy(a:state.data), 'v:val.delete()')
+
+    let ndeleted = len(results)
+    if ndeleted > 0
+        return {'final': printf(":bdelete'd %d buffers", ndeleted)}
     endif
 
     return {'state': a:state}
@@ -293,6 +306,7 @@ let s:key_handlers =
     \, 'CTRL-M': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
     \, 'CTRL-D': s:make_ref('delete')
+    \, 'CTRL-K': s:make_ref('kill')
     \, ' ': s:make_ref('guarded_space')
     \}
 
