@@ -1,5 +1,7 @@
 # chbuf.vim
 
+[tl;dr](#demo)
+
 ## Introduction
 
 `chbuf` provides several functionalities:
@@ -54,6 +56,10 @@ philosophy).  Scroll to the [Setup section](#setup) for this.
 
 Ready to use.
 
+## <a name="demo"/>Demo
+
+![demo](http://adaszko.github.io/chbuf.vim/chbuf.gif)
+
 ## Installation
 
 Assuming you have Pathogen up and running:
@@ -90,10 +96,6 @@ counterpart) is under-utilised for such a fast and powerful tool.
 ## Bugs
 
 It's generally slower on Windows.
-
-## To Do
-
- * tl;dr GIF screencast
 
 ## Author
 
