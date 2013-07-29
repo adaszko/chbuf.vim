@@ -34,9 +34,9 @@ FUNCTIONS					    *getline-functions*
     Like |getline#get_line()| but allows you to execute some action after
     every entered key.
 
-    {callback} is a function called to compute what gets later displayed to the
-    user.  It takes user input as an argument and is expected to return a
-    dictionary of the form:
+    {callback} is a function called to compute what gets later displayed to
+    the user.  It takes user input as a sole string argument and is expected
+    to return a dictionary of the form:
 
     {
 	'choice': any type
@@ -45,15 +45,15 @@ FUNCTIONS					    *getline-functions*
     }
 
     Elements in square brackets are optional. 'choice' is an object that is to
-    be returned upon hitting <CR> by the user.  This object isn’t inspected in
-    any way and thus can be of any type.  'data' is also arbitrarily–typed
-    entry that is just passed around by the library and can represent e.g. “a
-    list of possible choices,” though this isn’t enforced in any way. 'hint'
-    is a string that is displayed to the user with the intention of suggesting
-    what can be still chosen and if empty, nothing is displayed.
+    be returned upon hitting <CR> by the user.  It isn’t inspected in any way
+    and thus can be of any type.  'data' is also arbitrarily–typed entry that
+    is just passed around by the library and can represent e.g. “a list of
+    possible choices,” though this isn’t enforced in any way. 'hint' is a
+    string that is displayed to the user with the intention of suggesting what
+    can be still chosen.
 
-    Given this, the simplest possible {callback} function can be defined as
-    follows:
+    Given the above specification, the simplest possible {callback} function
+    can be defined as follows:
 
     function! id_callback(input)
 	return {'choice': a:input}
@@ -81,13 +81,14 @@ FUNCTIONS					    *getline-functions*
 
     getline architecture is based on a state machine and the purpose of
     handler functions is making state transitions in reaction to the user
-    input.  Each of handler functions take two arguments: current state and
-    the key name used to trigger the handler.
+    input.  Each of handler functions takes two arguments: current state and
+    the key name that triggered the handler.
 
-    Below, are the possible definitions for the above mentioned handler
+    Here are some possible definitions of the above mentioned handler
     functions.
 
     function! accept(state, key)
+	" End the user interaction immediately
 	return {'result': a:state.choice}
     endfunction
 
@@ -115,12 +116,11 @@ FUNCTIONS					    *getline-functions*
 	return {'state': a:state.transition(a:state.contents . a:key)}
     endfunction
 
-    guarded_space() is an example of conditional state transition — in three
-    out of four cases it does not perform any transition, meaning that input
-    contents don’t change.  In the fourth (and the last) case, the important
-    state.transition() function is called causing change in what the user
-    sees.
-
+    guarded_space() is an example of conditional state transition — in first
+    three out of four cases it does not perform any transition, meaning that
+    input contents don’t change.  In the fourth (and the last) case, the
+    crucial state.transition() function is called causing change in what the
+    user sees.
 
 CAVEATS						    *getline-caveats*
 

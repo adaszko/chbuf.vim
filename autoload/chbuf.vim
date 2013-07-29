@@ -503,6 +503,10 @@ function! s:query_spotlight(pattern) " {{{
 endfunction " }}}
 
 function! chbuf#change_file_spotlight(pattern) " {{{
+    if a:pattern == ""
+        return s:choose_path_interactively(s:query_spotlight("*"))
+    endif
+
     return s:choose_path_interactively(s:query_spotlight(a:pattern))
 endfunction " }}}
 " }}}
