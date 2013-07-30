@@ -92,11 +92,12 @@ function! s:get_old_files(ignored_pattern) " {{{
     let result = map(copy(v:oldfiles), "fnamemodify(v:val, ':p')")
     let result = map(result, 's:buffer_from_path(v:val)')
 
-    if !a:ignored_pattern
+    if a:ignored_pattern == ""
         return result
     endif
 
-    return filter(result, "v:val.path !~ '" . escape(a:ignored_pattern, "'") . "'")
+    let escaped = escape(a:ignored_pattern, "'")
+    return filter(result, printf("v:val.path !~ '%s'", escaped))
 endfunction " }}}
 
 function! s:get_buffers(ignored_pattern) " {{{
