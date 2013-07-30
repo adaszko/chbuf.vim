@@ -1,26 +1,26 @@
 *chbuf.txt*		Fast jumping between things that you edit
 =============================================================================
 
-INTRODUCTION						    *chbuf*
-ABOUT							    *chbuf-about*
-SETUP							    *chbuf-setup*
+INTRODUCTION                                                *chbuf*
+ABOUT                                                       *chbuf-about*
+SETUP                                                       *chbuf-setup*
 
 In the spirit of DRY, user is kindly pointed to project’s web page:
 
     http://github.com/adaszko/chbuf.vim
 
 
-AUTHOR							    *chbuf-author*
+AUTHOR                                                      *chbuf-author*
 
     Adam Szkoda <adaszko@gmail.com>
 
-LICENSE							    *chbuf-license*
+LICENSE                                                     *chbuf-license*
 
     BSD3
 
 
-EXPORTS							    *chbuf-exports*
-COMMANDS						    *chbuf-commands*
+EXPORTS                                                     *chbuf-exports*
+COMMANDS                                                    *chbuf-commands*
 
 *:ChangeBuffer* [|pattern|]
 
@@ -72,65 +72,65 @@ COMMANDS						    *chbuf-commands*
     Only available on Mac OS X.
 
 
-KEYS							    *chbuf-keys*
+KEYS                                                        *chbuf-keys*
 
 This section lists the keys that are not defined by getline internally or
 their behaviour has been redefined for the purposes of chbuf.
 
 
-CTRL-I							    *chbuf-CTRL-I*
-<Tab>							    *chbuf-<Tab>*
+CTRL-I                                                      *chbuf-CTRL-I*
+<Tab>                                                       *chbuf-<Tab>*
 
     For |:ChangeDirectory| it changes current directory (|:lcd|) to the
     selection and continues, for every other command exported by chbuf, it
     jumps to the first item in selections list and also changes current
     directory (again, |:lcd|) to where that file is placed.
 
-CTRL-S							    *chbuf-CTRL-S*
+CTRL-S                                                      *chbuf-CTRL-S*
 
     Jumps to the first item in selections list in a new horizontal split.
 
-CTRL-V							    *chbuf-CTRL-V*
+CTRL-V                                                      *chbuf-CTRL-V*
 
     Like |chbuf-CTRL-S| but splits vertically.
 
-CTRL-T							    *chbuf-CTRL-T*
+CTRL-T                                                      *chbuf-CTRL-T*
 
     Like |chbuf-CTRL-S| but open the selection in a new tab instead of split.
 
-CTRL-Y							    *chbuf-CTRL-Y*
+CTRL-Y                                                      *chbuf-CTRL-Y*
 
     Copies the full path of current selection into v:register.
 
-CTRL-D							    *chbuf-CTRL-D*
+CTRL-D                                                      *chbuf-CTRL-D*
 
     Issues |:bdelete| on current choice and returns to normal mode.  Does
     nothing for choices that are not loaded buffers.
 
-CTRL-K							    *chbuf-CTRL-K*
+CTRL-K                                                      *chbuf-CTRL-K*
 
     Issues |:bdelete| on all choices (!).  Does nothing for choices that are
     not loaded buffers.
 
-CTRL-M							    *chbuf-CTRL-M*
-<CR>							    *chbuf-<CR>*
+CTRL-M                                                      *chbuf-CTRL-M*
+<CR>                                                        *chbuf-<CR>*
 
     The behaviour of <CR> is just like |getline-CTRL-M| with the exception
     that you’re not allowed to select non-existent file.  Use |chbuf-CTRL-N|
     to force even if file doesn’t exist.
 
-CTRL-N							    *chbuf-CTRL-N*
+CTRL-N                                                      *chbuf-CTRL-N*
 
     Like |chbuf-CTRL-M| but allows for selection even of non-existent file.
 
 
-CAVEATS							    *chbuf-caveats*
+CAVEATS                                                     *chbuf-caveats*
 
 There will be troubles when using |:Spotlight| and |:SpotlightCustom| with
 file names on your file system containing newline characters.
 
 
-REFERENCES						    *chbuf-references*
+REFERENCES                                                  *chbuf-references*
 
 Using mdfind:
 
