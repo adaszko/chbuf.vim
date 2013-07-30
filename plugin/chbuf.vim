@@ -8,15 +8,14 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
-command -nargs=* ChangeBuffer call chbuf#change_buffer("<args>")
-command -nargs=* ChangeMixed call chbuf#change_mixed("<args>")
+command -nargs=* ChangeBuffer call chbuf#change_buffer('<args>')
+command -nargs=* ChangeMixed call chbuf#change_mixed('<args>')
 command -nargs=* ChangeFile call chbuf#change_file()
 command -nargs=* ChangeDirectory call chbuf#change_directory()
 
 
 if has('mac')
-    command! -nargs=* Spotlight call chbuf#change_file_spotlight("<args>")
-    command! -nargs=+ -complete=custom,chbuf#spotlight_custom_query_completion SpotlightCustom call chbuf#change_file_spotlight_custom("<args>")
+    command! -nargs=+ -complete=custom,chbuf#spotlight_query_completion Spotlight call chbuf#change_file_spotlight('<args>')
 endif
 
 

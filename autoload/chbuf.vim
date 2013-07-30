@@ -467,7 +467,7 @@ endfunction " }}}
 " }}}
 
 " {{{ Data Source: External Tools
-function! chbuf#spotlight_custom_query_completion(arglead, cmdline, cursorpos) " {{{
+function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
     " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html#//apple_ref/doc/uid/TP40001849-CJBEJBHH
     let keywords =
         \[ 'kMDItemFSName'
@@ -488,26 +488,13 @@ function! chbuf#spotlight_custom_query_completion(arglead, cmdline, cursorpos) "
     return join(keywords, "\n")
 endfunction " }}}
 
-function! s:query_spotlight_custom(query) " {{{
+function! s:query_spotlight(query) " {{{
     let paths = split(system(printf("mdfind -onlyin %s %s", shellescape(getcwd()), shellescape(a:query))), "\n")
     return map(paths, 's:buffer_from_path(v:val)')
 endfunction " }}}
 
-function! chbuf#change_file_spotlight_custom(query) " {{{
-    return s:choose_path_interactively(s:query_spotlight_custom(a:query))
-endfunction " }}}
-
-function! s:query_spotlight(pattern) " {{{
-    let query = printf('kMDItemContentTypeTree == public.plain-text && kMDItemFSName == "%s"', escape(a:pattern, '"'))
-    return s:query_spotlight_custom(query)
-endfunction " }}}
-
-function! chbuf#change_file_spotlight(pattern) " {{{
-    if a:pattern == ""
-        return s:choose_path_interactively(s:query_spotlight("*"))
-    endif
-
-    return s:choose_path_interactively(s:query_spotlight(a:pattern))
+function! chbuf#change_file_spotlight(query) " {{{
+    return s:choose_path_interactively(s:query_spotlight(a:query))
 endfunction " }}}
 " }}}
 

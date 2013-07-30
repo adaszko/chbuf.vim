@@ -41,8 +41,8 @@ COMMANDS                                                    *chbuf-commands*
     Jumps to a file placed anywhere in current directory subtree.  This may be
     arbitrarily slow depending on how high in directory tree you currently are
     and how many files you have in your file system (|CTRL-C| is your friend.)
-    If you’re on Mac OS X, use |:Spotlight| or |:SpotlightCustom| instead as
-    they are much faster and more general.
+    If you’re on Mac OS X, use |:Spotlight| instead as it is much faster and
+    more general.
 
     This command honours 'ignorecase' and 'wildignore'.
 
@@ -53,21 +53,11 @@ COMMANDS                                                    *chbuf-commands*
 
     This command honours 'ignorecase' and 'wildignore'.
 
-*:SpotlightCustom* [{query}]
+*:Spotlight* [{query}]
 
     Executes raw mdfind {query} and presents results as a getline menu.
     Provides some simple raw mdfind query keywords completion.  See
     |chbuf-references| for query syntax.
-
-    Only available on Mac OS X.
-
-*:Spotlight* [{pattern}]
-
-    A facade on |:SpotlightCustom|.  Does everything |:SpotlightCustom| does
-    except the {pattern} gets interpolated into into the following mdfind
-    query:
-
-    kMDItemContentTypeTree == public.plain-text && kMDItemFSName == "%s"
 
     Only available on Mac OS X.
 
@@ -126,8 +116,8 @@ CTRL-N                                                      *chbuf-CTRL-N*
 
 CAVEATS                                                     *chbuf-caveats*
 
-There will be troubles when using |:Spotlight| and |:SpotlightCustom| with
-file names on your file system containing newline characters.
+There will be troubles when using |:Spotlight| with file names on your file
+system containing newline characters.
 
 
 REFERENCES                                                  *chbuf-references*

@@ -10,7 +10,7 @@
   * Jumping to recently edited files (paths are taken from `v:oldfiles` variable; quite useful if you’re returning to some file after restart) &mdash; `:help :ChangeMixed`
   * Jumping to files in current directory subtree &mdash; `:help :ChangeFile`
   * Quickly and interactively changing current working directory &mdash; `:help :ChangeDirectory`
-  * And on Mac OS X, jumping to a file that comes from a result of Spotlight search &mdash; `:help :Spotlight` and `:help :SpotlightCustom`
+  * And on Mac OS X, jumping to a file that comes from a result of Spotlight search &mdash; `:help :Spotlight`
 
 All of these share common user interface which is that of `getline` library
 (see `:help getline.txt`).  The philosophy is that user should be presented
@@ -52,10 +52,6 @@ philosophy).  Scroll to the [Setup section](#setup) for this.
   * Cross-platform: Linux, Mac OS X, Windows
   * Comes with library designed specifically for reuse &mdash; `getline` (think readline for Vim)
 
-## Status
-
-Ready to use.
-
 ## <a name="demo"/>Demo
 
 ![demo](http://adaszko.github.io/chbuf.vim/chbuf.gif)
@@ -90,7 +86,7 @@ from.
 `chbuf` came into existence as a simple demo of `getline`, which in turn has
 been created for the needs of `orgdt`.  I realised at some point that no other
 plug-in of this kind is compatible with my work flow and design requirements.
-Also, I get the impression that Spolight (and its `mdfind` command line
+Also, I get the impression that Spotlight (and its `mdfind` command line
 counterpart) is under-utilised for such a fast and powerful tool.
 
 ## Bugs
