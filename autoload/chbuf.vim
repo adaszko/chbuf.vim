@@ -190,8 +190,7 @@ function! s:shortest_unique_suffixes(buffers) " {{{
     for buf in a:buffers
         " Paths are allowed to have multiple adjacent segment separators
         let sep = printf('\V%s\+', s:escaped_path_seg_sep)
-        let path = s:case_sensitive_file_system ? buf['path'] : tolower(buf['path'])
-        let segments = reverse(split(path, sep))
+        let segments = reverse(split(buf['path'], sep))
 
         " ASSUMPTION: None of the segments list is a prefix of another
         let node = trie
