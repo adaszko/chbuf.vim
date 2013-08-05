@@ -37,11 +37,6 @@ function! s:is_number_choosable() dict " {{{
     return 1
 endfunction " }}}
 
-function! s:delete_number() dict " {{{
-    execute 'silent' 'bdelete' self.number
-    return 1
-endfunction " }}}
-
 function! s:buffer_from_number(number, name) " {{{
     let path = expand('#' . a:number . ':p')
     return { 'number':          a:number
@@ -49,7 +44,6 @@ function! s:buffer_from_number(number, name) " {{{
           \, 'name':            a:name
           \, 'switch':          s:make_ref('switch_to_number')
           \, 'is_choosable':    s:make_ref('is_number_choosable')
-          \, 'delete':          s:make_ref('delete_number')
           \}
 endfunction " }}}
 
@@ -61,15 +55,10 @@ function! s:path_choosable() dict " {{{
     return filereadable(self.path)
 endfunction " }}}
 
-function! s:delete_path() dict " {{{
-    return 0
-endfunction " }}}
-
 function! s:buffer_from_path(path) " {{{
     return { 'path':            expand(a:path)
           \, 'switch':          s:make_ref('switch_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
-          \, 'delete':          s:make_ref('delete_path')
           \}
 endfunction " }}}
 
@@ -281,27 +270,6 @@ function! s:guarded_space(state, key) " {{{
     return {'state': a:state.transition(a:state.contents . a:key)}
 endfunction " }}}
 
-function! s:delete(state, key) " {{{
-    let path = a:state.data[0].path
-
-    if a:state.data[0].delete()
-        return {'final': printf(":bdelete %s", path)}
-    endif
-
-    return {'state': a:state}
-endfunction " }}}
-
-function! s:kill(state, key) " {{{
-    let results = filter(copy(a:state.data), 'v:val.delete()')
-
-    let ndeleted = len(results)
-    if ndeleted > 0
-        return {'final': printf(":bdelete'd %d buffers", ndeleted)}
-    endif
-
-    return {'state': a:state}
-endfunction " }}}
-
 let s:key_handlers =
     \{ 'CTRL-S': s:make_ref('accept')
     \, 'CTRL-V': s:make_ref('accept')
@@ -310,8 +278,6 @@ let s:key_handlers =
     \, 'CTRL-M': s:make_ref('accept')
     \, 'CTRL-N': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
-    \, 'CTRL-D': s:make_ref('delete')
-    \, 'CTRL-K': s:make_ref('kill')
     \, ' ': s:make_ref('guarded_space')
     \}
 
