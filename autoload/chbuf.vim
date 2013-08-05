@@ -376,7 +376,13 @@ function! s:by_len(left, right) " {{{
 endfunction " }}}
 
 function! s:good_dirs(path) " {{{
-    if a:path == '.'
+    let segments = split(a:path, s:unescaped_path_seg_sep)
+
+    if segments[-1] == '.'
+        return 0
+    endif
+
+    if len(segments) != 1 && segments[-1] == '..'
         return 0
     endif
 
@@ -393,13 +399,14 @@ endfunction " }}}
 function! s:list_glob(glob) " {{{
     let dirs = glob(a:glob, 1, 1)
     call filter(dirs, 's:good_dirs(v:val)')
-    call sort(dirs, 's:by_len')
     return dirs
 endfunction " }}}
 
 function! s:get_dirs() " {{{
-    let dirs = s:list_glob('*')
-    return extend(dirs, s:list_glob('.*'))
+    let dirs = s:list_glob('**')
+    call extend(dirs, s:list_glob('**/.*'))
+    call sort(dirs, 's:by_len')
+    return dirs
 endfunction " }}}
 
 function! s:change_dir_callback(input) " {{{
@@ -413,7 +420,8 @@ function! s:change_dir_callback(input) " {{{
         return {}
     endif
 
-    return {'data': dirs, 'hint': join(dirs)}
+    let marked = map(copy(dirs), printf("v:val . '%s'", s:unescaped_path_seg_sep))
+    return {'data': dirs, 'hint': join(marked)}
 endfunction " }}}
 
 function! s:safe_chdir(dir) " {{{
