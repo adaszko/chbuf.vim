@@ -39,24 +39,20 @@ FUNCTIONS                                           *getline-functions*
     to return a dictionary of the form:
 
     {
-        'choice': any type
-        ['data': any type,]
+        'data': any type,
         ['hint': string,]
     }
 
-    Elements in square brackets are optional. 'choice' is an object that is to
+    Elements in square brackets are optional. 'data' is an object that is to
     be returned upon hitting <CR> by the user.  It isn’t inspected in any way
-    and thus can be of any type.  'data' is also arbitrarily–typed entry that
-    is just passed around by the library and can represent e.g. “a list of
-    possible choices,” though this isn’t enforced in any way. 'hint' is a
-    string that is displayed to the user with the intention of suggesting what
-    can be still chosen.
+    and thus can be of any type.  'hint' is a string that is displayed to the
+    user with the intention of suggesting what can be still chosen.
 
     Given the above specification, the simplest possible {callback} function
     can be defined as follows:
 
     function! id_callback(input)
-        return {'choice': a:input}
+        return {'data': a:input}
     endfunction
 
 *getline#get_line_reactively_override_keys()* ({callback}, {key_handlers})
@@ -89,10 +85,10 @@ FUNCTIONS                                           *getline-functions*
 
     function! accept(state, key)
         " End the user interaction immediately
-        return {'result': a:state.choice}
+        return {'result': a:state.data[0]}
     endfunction
 
-    accept() simply ends input with whatever is stored in the 'choice'
+    accept() simply ends line input with whatever is stored in the 'data'
     element described in |getline#get_line_reactively()|.
 
     function! guarded_space(state, key)

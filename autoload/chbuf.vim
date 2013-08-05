@@ -241,7 +241,7 @@ function! s:get_line_callback(input) " {{{
         return {}
     endif
 
-    return {'choice': matching[0], 'data': matching, 'hint': s:render_hint(matching)}
+    return {'data': matching, 'hint': s:render_hint(matching)}
 endfunction " }}}
 
 function! s:filter_unchoosable(buffers) " {{{
@@ -249,20 +249,20 @@ function! s:filter_unchoosable(buffers) " {{{
 endfunction " }}}
 
 function! s:accept(state, key) " {{{
-    if a:state.choice.is_choosable()
-        return {'result': a:state.choice}
+    if a:state.data[0].is_choosable()
+        return {'result': a:state.data[0]}
     endif
 
     if a:key == 'CTRL-N'
-        return {'result': a:state.choice}
+        return {'result': a:state.data[0]}
     endif
 
     return {'state': a:state}
 endfunction " }}}
 
 function! s:yank(state, key) " {{{
-    call setreg(v:register, a:state.choice.path)
-    return {'final': a:state.config.separator . a:state.choice.path}
+    call setreg(v:register, a:state.data[0].path)
+    return {'final': a:state.config.separator . a:state.data[0].path}
 endfunction " }}}
 
 function! s:guarded_space(state, key) " {{{
@@ -282,9 +282,9 @@ function! s:guarded_space(state, key) " {{{
 endfunction " }}}
 
 function! s:delete(state, key) " {{{
-    let path = a:state.choice.path
+    let path = a:state.data[0].path
 
-    if a:state.choice.delete()
+    if a:state.data[0].delete()
         return {'final': printf(":bdelete %s", path)}
     endif
 
@@ -413,7 +413,7 @@ function! s:change_dir_callback(input) " {{{
         return {}
     endif
 
-    return {'choice': dirs[0], 'data': dirs, 'hint': join(dirs)}
+    return {'data': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
 function! s:safe_chdir(dir) " {{{
@@ -421,17 +421,17 @@ function! s:safe_chdir(dir) " {{{
 endfunction " }}}
 
 function! s:ch_seg(state, key) " {{{
-    call s:safe_chdir(a:state.choice)
+    call s:safe_chdir(a:state.data[0])
     let w:chbuf_cache = s:get_dirs()
     return {'state': a:state.transition('')}
 endfunction " }}}
 
 function! s:accept_dir(state, key) " {{{
-    return {'result': a:state.choice}
+    return {'result': a:state.data[0]}
 endfunction " }}}
 
 function! s:yank_dir(state, key) " {{{
-    let full_path = getcwd() . s:escaped_path_seg_sep . a:state.choice
+    let full_path = getcwd() . s:escaped_path_seg_sep . a:state.data[0]
     call setreg(v:register, full_path)
     return {'final': a:state.config.separator . full_path}
 endfunction " }}}

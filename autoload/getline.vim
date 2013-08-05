@@ -112,7 +112,6 @@ function! s:transition_state(new_contents) dict " {{{
 
     let new_state           = copy(self)
     let new_state.contents  = a:new_contents
-    let new_state.choice    = candidates.choice
     let new_state.data      = get(candidates, 'data', '')
     let new_state.hint      = get(candidates, 'hint', '')
     return new_state
@@ -150,7 +149,6 @@ function! s:make_state(config) " {{{
     let state                           = {}
     let state.config                    = a:config
     let state.contents                  = ""
-    let state.choice                    = candidates.choice
     let state.data                      = get(candidates, 'data', '')
     let state.hint                      = get(candidates, 'hint', '')
     let state.transition                = s:make_ref('transition_state')
@@ -174,7 +172,7 @@ function! s:cancel(state, key) " {{{
 endfunction " }}}
 
 function! s:accept(state, key) " {{{
-    return {'result': a:state.choice}
+    return {'result': a:state.data}
 endfunction " }}}
 
 function! s:unix_line_discard(state, key) " {{{
@@ -368,7 +366,7 @@ function! getline#get_line_reactively(callback) " {{{
 endfunction " }}}
 
 function! s:id_callback(input) " {{{
-    return {'choice': a:input}
+    return {'data': a:input}
 endfunction " }}}
 
 function! getline#get_line() " {{{
