@@ -63,10 +63,10 @@ function! s:buffer_from_path(path) " {{{
 endfunction " }}}
 
 function! s:buffer_from_relative_path(relative) " {{{
-    return { 'relative':    a:relative
-          \, 'path':        join([getcwd(), a:relative], s:unescaped_path_seg_sep)
-          \, 'switch':      s:make_ref('switch_to_path')
-          \, 'is_choosable': s:make_ref('path_choosable')
+    return { 'relative':        a:relative
+          \, 'path':            join([getcwd(), a:relative], s:unescaped_path_seg_sep)
+          \, 'switch':          s:make_ref('switch_to_path')
+          \, 'is_choosable':    s:make_ref('path_choosable')
           \}
 endfunction " }}}
 
@@ -142,7 +142,7 @@ function! s:uniq_paths(buffers) " {{{
     return values(unique)
 endfunction " }}}
 
-function! s:set_unique_suffixes(node, cand, accum) " {{{
+function! s:assign_unique_suffixes(node, cand, accum) " {{{
     let children = keys(a:node)
 
     let cand = copy(a:cand)
@@ -160,10 +160,10 @@ function! s:set_unique_suffixes(node, cand, accum) " {{{
             let buf['suffix'] = join(reverse(cand), s:unescaped_path_seg_sep)
         elseif len(children) == 1
             call add(accum, seg)
-            call s:set_unique_suffixes(val, cand, accum)
+            call s:assign_unique_suffixes(val, cand, accum)
         else
             call add(cand, seg)
-            call s:set_unique_suffixes(val, cand, accum)
+            call s:assign_unique_suffixes(val, cand, accum)
             call remove(cand, -1)
         endif
         unlet val
@@ -174,8 +174,9 @@ function! s:by_suffix_len(left, right) " {{{
     return strlen(a:left.suffix) - strlen(a:right.suffix)
 endfunction " }}}
 
-function! s:shortest_unique_suffixes(buffers) " {{{
+function! s:build_trie(buffers) " {{{
     let trie = {}
+
     for buf in a:buffers
         " Paths are allowed to have multiple adjacent segment separators
         let sep = printf('\V%s\+', s:escaped_path_seg_sep)
@@ -194,7 +195,12 @@ function! s:shortest_unique_suffixes(buffers) " {{{
         let node[seg] = [buf]
     endfor
 
-    call s:set_unique_suffixes(trie, [], [])
+    return trie
+endfunction " }}}
+
+function! s:update_shortest_unique_suffixes(buffers) " {{{
+    let trie = s:build_trie(a:buffers)
+    call s:assign_unique_suffixes(trie, [], [])
     call sort(a:buffers, 's:by_suffix_len')
     return a:buffers
 endfunction " }}}
@@ -286,7 +292,7 @@ function! s:prompt(buffers) " {{{
     if !has('win32')
         let w:chbuf_cache = s:filter_unchoosable(w:chbuf_cache)
     endif
-    let w:chbuf_cache = s:shortest_unique_suffixes(w:chbuf_cache)
+    let w:chbuf_cache = s:update_shortest_unique_suffixes(w:chbuf_cache)
 
     let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
 
@@ -405,7 +411,7 @@ function! s:accept_dir(state, key) " {{{
 endfunction " }}}
 
 function! s:yank_dir(state, key) " {{{
-    let full_path = getcwd() . s:escaped_path_seg_sep . a:state.data[0]
+    let full_path = getcwd() . s:unescaped_path_seg_sep . a:state.data[0]
     call setreg(v:register, full_path)
     return {'final': a:state.config.separator . full_path}
 endfunction " }}}
