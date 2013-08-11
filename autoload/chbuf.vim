@@ -154,19 +154,17 @@ function! s:assign_unique_suffixes(node, cand, accum) " {{{
     endif
 
     for seg in children
-        let val = a:node[seg]
-        if type(val) == type([])
-            let buf = val[0]
+        if seg == s:unescaped_path_seg_sep
+            let buf = a:node[seg]
             let buf['suffix'] = join(reverse(cand), s:unescaped_path_seg_sep)
         elseif len(children) == 1
             call add(accum, seg)
-            call s:assign_unique_suffixes(val, cand, accum)
+            call s:assign_unique_suffixes(a:node[seg], cand, accum)
         else
             call add(cand, seg)
-            call s:assign_unique_suffixes(val, cand, accum)
+            call s:assign_unique_suffixes(a:node[seg], cand, accum)
             call remove(cand, -1)
         endif
-        unlet val
     endfor
 endfunction " }}}
 
@@ -182,17 +180,15 @@ function! s:build_trie(buffers) " {{{
         let sep = printf('\V%s\+', s:escaped_path_seg_sep)
         let segments = reverse(split(buf['path'], sep))
 
-        " ASSUMPTION: None of the segments list is a prefix of another
         let node = trie
-        for i in range(len(segments)-1)
-            let seg = segments[i]
+        for seg in segments
             if !has_key(node, seg)
                 let node[seg] = {}
             endif
             let node = node[seg]
         endfor
-        let seg = segments[-1]
-        let node[seg] = [buf]
+
+        let node[s:unescaped_path_seg_sep] = buf
     endfor
 
     return trie
