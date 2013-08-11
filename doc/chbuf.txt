@@ -48,8 +48,14 @@ COMMANDS                                                    *chbuf-commands*
 
 *:ChangeDirectory*
 
-    Provides an interactive menu for changing current directory one path
-    segment at a time.  `<Tab>` plays the role of "accept segment" key.
+    Issues an |:cd| on a directory in current directory subtree.  See also
+    |chbuf-<Tab>|.
+
+    This command honours 'ignorecase' and 'wildignore'.
+
+*:LocalChangeDirectory*
+
+    Like |:ChangeDirectory| but uses |:lcd| instead of |:cd|.
 
     This command honours 'ignorecase' and 'wildignore'.
 

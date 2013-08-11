@@ -313,7 +313,6 @@ let s:key_handlers =
     \{ 'CTRL-S': s:make_ref('accept')
     \, 'CTRL-V': s:make_ref('accept')
     \, 'CTRL-T': s:make_ref('accept')
-    \, 'CTRL-I': s:make_ref('accept')
     \, 'CTRL-M': s:make_ref('accept')
     \, 'CTRL-N': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
@@ -342,9 +341,6 @@ function! s:change(result) " {{{
 
     if key == 'CTRL-M' || key == 'CTRL-N'
         call buffer.switch()
-    elseif key == 'CTRL-I'
-        call buffer.switch()
-        call s:safe_chdir(expand("%:h"))
     elseif key == 'CTRL-T'
         execute 'tabnew'
         call buffer.switch()
@@ -433,14 +429,22 @@ function! s:change_dir_callback(input) " {{{
     return {'data': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
-function! s:safe_chdir(dir) " {{{
-    execute 'lcd' escape(a:dir, ' ')
+function! s:safe_chdir(cmd, dir) " {{{
+    execute a:cmd escape(a:dir, ' ')
 endfunction " }}}
 
-function! s:ch_seg(state, key) " {{{
-    call s:safe_chdir(a:state.data[0])
+function! s:ch_seg(state, key, cmd) " {{{
+    call s:safe_chdir(a:cmd, a:state.data[0])
     let w:chbuf_cache = s:get_dirs()
     return {'state': a:state.transition('')}
+endfunction " }}}
+
+function! s:lcd_seg(state, key) " {{{
+    return s:ch_seg(a:state, a:key, 'lcd')
+endfunction " }}}
+
+function! s:cd_seg(state, key) " {{{
+    return s:ch_seg(a:state, a:key, 'cd')
 endfunction " }}}
 
 function! s:accept_dir(state, key) " {{{
@@ -454,8 +458,7 @@ function! s:yank_dir(state, key) " {{{
 endfunction " }}}
 
 let s:chdir_key_handlers =
-    \{ 'CTRL-I': s:make_ref('ch_seg')
-    \, 'CTRL-S': s:make_ref('accept_dir')
+    \{ 'CTRL-S': s:make_ref('accept_dir')
     \, 'CTRL-V': s:make_ref('accept_dir')
     \, 'CTRL-T': s:make_ref('accept_dir')
     \, 'CTRL-M': s:make_ref('accept_dir')
@@ -463,9 +466,9 @@ let s:chdir_key_handlers =
     \, ' ': s:make_ref('guarded_space')
     \}
 
-function! chbuf#change_directory() " {{{
+function! s:change_dir(cmd, key_handlers) " {{{
     let w:chbuf_cache = s:get_dirs()
-    let result = getline#get_line_reactively_override_keys(s:make_ref('change_dir_callback'), s:chdir_key_handlers)
+    let result = getline#get_line_reactively_override_keys(s:make_ref('change_dir_callback'), a:key_handlers)
     unlet w:chbuf_cache
     if !has_key(result, 'value')
         return
@@ -480,6 +483,20 @@ function! chbuf#change_directory() " {{{
     elseif result.key == 'CTRL-V'
         execute 'silent' 'vsplit' result.value
     endif
+endfunction " }}}
+
+function! s:chdir(cmd, tabfn) " {{{
+    let key_handlers = copy(s:chdir_key_handlers)
+    let key_handlers['CTRL-I'] = s:make_ref(a:tabfn)
+    call s:change_dir(a:cmd, key_handlers)
+endfunction " }}}
+
+function! chbuf#change_directory() " {{{
+    call s:chdir('cd', 'cd_seg')
+endfunction " }}}
+
+function! chbuf#local_change_directory() " {{{
+    call s:chdir('lcd', 'lcd_seg')
 endfunction " }}}
 " }}}
 
