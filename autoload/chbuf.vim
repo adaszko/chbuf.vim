@@ -52,7 +52,7 @@ function! s:switch_to_path() dict " {{{
 endfunction " }}}
 
 function! s:path_choosable() dict " {{{
-    return filereadable(self.path)
+    return filereadable(self.path) || isdirectory(self.path)
 endfunction " }}}
 
 function! s:buffer_from_path(path) " {{{
