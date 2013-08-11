@@ -37,13 +37,30 @@ function! s:is_number_choosable() dict " {{{
     return 1
 endfunction " }}}
 
+function! s:set_file_suffix(suffix) dict " {{{
+    let self.suffix = a:suffix
+endfunction " }}}
+
+function! s:set_dir_suffx(suffix) dict " {{{
+    let self.suffix = a:suffix . s:unescaped_path_seg_sep
+endfunction " }}}
+
 function! s:buffer_from_number(number, name) " {{{
     let path = expand('#' . a:number . ':p')
+
+    if isdirectory(path)
+        let path .= s:unescaped_path_seg_sep
+        let set_suf_fn = 'set_dir_suffx'
+    else
+        let set_suf_fn = 'set_file_suffix'
+    endif
+
     return { 'number':          a:number
           \, 'path':            path
           \, 'name':            a:name
           \, 'switch':          s:make_ref('switch_to_number')
           \, 'is_choosable':    s:make_ref('is_number_choosable')
+          \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
 endfunction " }}}
 
@@ -56,17 +73,37 @@ function! s:path_choosable() dict " {{{
 endfunction " }}}
 
 function! s:buffer_from_path(path) " {{{
-    return { 'path':            expand(a:path)
+    let expanded = expand(a:path)
+
+    if isdirectory(expanded)
+        let expanded .= s:unescaped_path_seg_sep
+        let set_suf_fn = 'set_dir_suffx'
+    else
+        let set_suf_fn = 'set_file_suffix'
+    endif
+
+    return { 'path':            expanded
           \, 'switch':          s:make_ref('switch_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
+          \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
 endfunction " }}}
 
 function! s:buffer_from_relative_path(relative) " {{{
+    let absolute = join([getcwd(), a:relative], s:unescaped_path_seg_sep)
+
+    if isdirectory(absolute)
+        let absolute .= s:unescaped_path_seg_sep
+        let set_suf_fn = 'set_dir_suffx'
+    else
+        let set_suf_fn = 'set_file_suffix'
+    endif
+
     return { 'relative':        a:relative
-          \, 'path':            join([getcwd(), a:relative], s:unescaped_path_seg_sep)
+          \, 'path':            absolute
           \, 'switch':          s:make_ref('switch_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
+          \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
 endfunction " }}}
 
@@ -156,7 +193,7 @@ function! s:assign_unique_suffixes(node, cand, accum) " {{{
     for seg in children
         if seg == s:unescaped_path_seg_sep
             let buf = a:node[seg]
-            let buf['suffix'] = join(reverse(cand), s:unescaped_path_seg_sep)
+            call buf.set_suffix(join(reverse(cand), s:unescaped_path_seg_sep))
         elseif len(children) == 1
             call add(accum, seg)
             call s:assign_unique_suffixes(a:node[seg], cand, accum)
@@ -364,9 +401,14 @@ function! s:good_dirs(path) " {{{
     endif
 endfunction " }}}
 
+function! s:append_path_seg_sep(dir) " {{{
+    return a:dir . s:unescaped_path_seg_sep
+endfunction " }}}
+
 function! s:list_glob(glob) " {{{
     let dirs = glob(a:glob, 1, 1)
     call filter(dirs, 's:good_dirs(v:val)')
+    call map(dirs, 's:append_path_seg_sep(v:val)')
     return dirs
 endfunction " }}}
 
@@ -388,8 +430,7 @@ function! s:change_dir_callback(input) " {{{
         return {}
     endif
 
-    let marked = map(copy(dirs), printf("v:val . '%s'", s:unescaped_path_seg_sep))
-    return {'data': dirs, 'hint': join(marked)}
+    return {'data': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
 function! s:safe_chdir(dir) " {{{
