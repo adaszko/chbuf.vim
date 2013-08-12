@@ -272,10 +272,6 @@ function! s:get_line_callback(input) " {{{
     return {'data': matching, 'hint': s:render_hint(matching)}
 endfunction " }}}
 
-function! s:filter_unchoosable(buffers) " {{{
-    return filter(a:buffers, 'v:val.is_choosable()')
-endfunction " }}}
-
 function! s:accept(state, key) " {{{
     if a:state.data[0].is_choosable()
         return {'result': a:state.data[0]}
@@ -321,13 +317,8 @@ let s:key_handlers =
 
 function! s:prompt(buffers) " {{{
     let w:chbuf_cache = a:buffers
-    if !has('win32')
-        let w:chbuf_cache = s:filter_unchoosable(w:chbuf_cache)
-    endif
     let w:chbuf_cache = s:update_shortest_unique_suffixes(w:chbuf_cache)
-
     let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
-
     unlet w:chbuf_cache
     return result
 endfunction " }}}
