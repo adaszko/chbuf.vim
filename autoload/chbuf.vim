@@ -17,7 +17,13 @@ else
     let s:escaped_path_seg_sep = '\\'
 endif
 
-let s:case_sensitive_file_system = has('unix')
+function! s:is_file_system_case_sensitive() " {{{
+    let script = expand('<sfile>')
+    let ignores_case = filereadable(tolower(script)) && filereadable(toupper(script))
+    return !ignores_case
+endfunction " }}}
+
+let s:case_sensitive_file_system = s:is_file_system_case_sensitive()
 
 function! s:get_script_id() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_get_script_id$')
