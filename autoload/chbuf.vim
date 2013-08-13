@@ -17,9 +17,10 @@ else
     let s:escaped_path_seg_sep = '\\'
 endif
 
+let s:script_name = expand('<sfile>')
+
 function! s:is_file_system_case_sensitive() " {{{
-    let script = expand('<sfile>')
-    let ignores_case = filereadable(tolower(script)) && filereadable(toupper(script))
+    let ignores_case = filereadable(tolower(s:script_name)) && filereadable(toupper(s:script_name))
     return !ignores_case
 endfunction " }}}
 
@@ -167,81 +168,99 @@ function! s:get_buffers(ignored_pattern) " {{{
     return result
 endfunction " }}}
 
-function! s:uniq_paths(buffers) " {{{
-    let unique = {}
+function! s:segmentwise_shortest_unique_prefix(cur, ref) " {{{
+    let curlen = len(a:cur)
+    let reflen = len(a:ref)
 
-    for buf in a:buffers
-        if len(buf['path']) == 0
+    let result = []
+    for i in range(curlen)
+        call add(result, a:cur[i])
+
+        if i >= reflen
+            break
+        endif
+
+        let equal = s:case_sensitive_file_system ? a:cur[i] ==# a:ref[i] : a:cur[i] ==? a:ref[i]
+        if equal
             continue
         endif
 
-        if s:case_sensitive_file_system
-            let unique[buf['path']] = buf
-        else
-            let unique[tolower(buf['path'])] = buf
-        endif
+        break
     endfor
 
-    return values(unique)
+    return result
 endfunction " }}}
 
-function! s:assign_unique_suffixes(node, cand, accum) " {{{
-    let children = keys(a:node)
-
-    let cand = copy(a:cand)
-    let accum = copy(a:accum)
-
-    if len(children) > 1
-        call extend(cand, accum)
-        let accum = []
+function! s:set_unique_segments_prefix(bufs) " {{{
+    let bufslen = len(a:bufs)
+    if bufslen == 0
+        return []
+    elseif bufslen == 1
+        return [[a:bufs[0].segments[0]]]
     endif
 
-    for seg in children
-        if seg == s:unescaped_path_seg_sep
-            let buf = a:node[seg]
-            call buf.set_suffix(join(reverse(cand), s:unescaped_path_seg_sep))
-        elseif len(children) == 1
-            call add(accum, seg)
-            call s:assign_unique_suffixes(a:node[seg], cand, accum)
-        else
-            call add(cand, seg)
-            call s:assign_unique_suffixes(a:node[seg], cand, accum)
-            call remove(cand, -1)
-        endif
+    let result = [s:segmentwise_shortest_unique_prefix(a:bufs[0].segments, a:bufs[1].segments)]
+    for i in range(1, bufslen-2)
+        let left = s:segmentwise_shortest_unique_prefix(a:bufs[i].segments, a:bufs[i-1].segments)
+        let right = s:segmentwise_shortest_unique_prefix(a:bufs[i].segments, a:bufs[i+1].segments)
+        call add(result, len(left) > len(right) ? left : right)
     endfor
+    call add(result, s:segmentwise_shortest_unique_prefix(a:bufs[-1].segments, a:bufs[-2].segments))
+
+    return result
+endfunction " }}}
+
+function! g:by_segments(left, right) " {{{
+    let less = s:case_sensitive_file_system ? a:left.segments <# a:right.segments : a:left.segments <? a:right.segments
+    return less ? -1 : 1
 endfunction " }}}
 
 function! s:by_suffix_len(left, right) " {{{
     return strlen(a:left.suffix) - strlen(a:right.suffix)
 endfunction " }}}
 
-function! s:build_trie(buffers) " {{{
-    let trie = {}
+function! s:uniq_segments(buffers) " {{{
+    if len(a:buffers) == 0
+        return a:buffers
+    endif
 
-    for buf in a:buffers
-        " Paths are allowed to have multiple adjacent segment separators
-        let sep = printf('\V%s\+', s:escaped_path_seg_sep)
-        let segments = reverse(split(buf['path'], sep))
-
-        let node = trie
-        for seg in segments
-            if !has_key(node, seg)
-                let node[seg] = {}
-            endif
-            let node = node[seg]
-        endfor
-
-        let node[s:unescaped_path_seg_sep] = buf
+    let prev = a:buffers[0]
+    let result = [prev]
+    for i in range(1, len(a:buffers)-1)
+        let equal = s:case_sensitive_file_system ? a:buffers[i].segments ==# prev.segments : a:buffers[i].segments ==? prev.segments
+        if !equal
+            call add(result, a:buffers[i])
+        endif
+        let prev = a:buffers[i]
     endfor
 
-    return trie
+    return result
 endfunction " }}}
 
-function! s:update_shortest_unique_suffixes(buffers) " {{{
-    let trie = s:build_trie(a:buffers)
-    call s:assign_unique_suffixes(trie, [], [])
-    call sort(a:buffers, 's:by_suffix_len')
-    return a:buffers
+function! s:set_segmentwise_shortest_unique_suffixes(buffers) " {{{
+    let result = a:buffers
+
+    let sep = printf('\V%s\+', s:escaped_path_seg_sep)
+    for buf in result
+        let buf.segments = join(reverse(split(buf.path, sep)), s:unescaped_path_seg_sep)
+    endfor
+
+    call sort(result, 'g:by_segments')
+    let result = s:uniq_segments(result)
+
+    for buf in result
+        let buf.segments = split(buf.segments, sep)
+    endfor
+
+    let unique_segmentwise_prefixes = s:set_unique_segments_prefix(result)
+    for i in range(len(result))
+        call result[i].set_suffix(join(reverse(unique_segmentwise_prefixes[i]), s:unescaped_path_seg_sep))
+        unlet result[i].segments
+    endfor
+
+    call sort(result, 's:by_suffix_len')
+
+    return result
 endfunction " }}}
 
 function! s:filter_matching(input, buffers) " {{{
@@ -323,7 +342,7 @@ let s:key_handlers =
 
 function! s:prompt(buffers) " {{{
     let w:chbuf_cache = a:buffers
-    let w:chbuf_cache = s:update_shortest_unique_suffixes(w:chbuf_cache)
+    let w:chbuf_cache = s:set_segmentwise_shortest_unique_suffixes(w:chbuf_cache)
     let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
     unlet w:chbuf_cache
     return result
@@ -360,7 +379,7 @@ endfunction " }}}
 
 function! chbuf#change_mixed(ignored_pattern) " {{{
     let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
-    return s:choose_path_interactively(s:uniq_paths(buffers))
+    return s:choose_path_interactively(buffers)
 endfunction " }}}
 
 function! chbuf#change_file() " {{{
