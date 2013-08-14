@@ -114,8 +114,16 @@ function! s:buffer_from_relative_path(relative) " {{{
           \}
 endfunction " }}}
 
+function! s:GlobList(wildcard, flags) " {{{
+    if v:version < 704
+        return split(glob(a:wildcard, a:flags), "\n")
+    endif
+
+    return glob(a:wildcard, a:flags, 1)
+endfunction " }}}
+
 function! s:get_glob_files() " {{{
-    let paths = glob('**', 0, 1)
+    let paths = s:GlobList('**', 0)
     call filter(paths, 'getftype(v:val) =~# "\\v(file|link)"')
     call map(paths, 's:buffer_from_relative_path(v:val)')
     return paths
@@ -418,7 +426,7 @@ function! s:append_path_seg_sep(dir) " {{{
 endfunction " }}}
 
 function! s:list_glob(glob) " {{{
-    let dirs = glob(a:glob, 1, 1)
+    let dirs = s:GlobList(a:glob, 1)
     call filter(dirs, 's:good_dirs(v:val)')
     call map(dirs, 's:append_path_seg_sep(v:val)')
     return dirs
