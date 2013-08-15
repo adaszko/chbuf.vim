@@ -396,10 +396,6 @@ endfunction " }}}
 " }}}
 
 " {{{ Data Source: Directories
-function! s:by_len(left, right) " {{{
-    return len(a:left) - len(a:right)
-endfunction " }}}
-
 function! s:good_dirs(path) " {{{
     let segments = split(a:path, s:unescaped_path_seg_sep)
 
@@ -428,29 +424,15 @@ endfunction " }}}
 function! s:list_glob(glob) " {{{
     let dirs = s:GlobList(a:glob, 1)
     call filter(dirs, 's:good_dirs(v:val)')
-    call map(dirs, 's:append_path_seg_sep(v:val)')
     return dirs
 endfunction " }}}
 
 function! s:get_dirs() " {{{
     let dirs = s:list_glob('**')
     call extend(dirs, s:list_glob('**/.*'))
-    call sort(dirs, 's:by_len')
+    call map(dirs, 's:buffer_from_relative_path(v:val)')
+    let dirs = s:set_segmentwise_shortest_unique_suffixes(dirs)
     return dirs
-endfunction " }}}
-
-function! s:change_dir_callback(input) " {{{
-    let dirs = copy(w:chbuf_cache)
-
-    for sub in split(a:input)
-        call filter(dirs, printf('stridx(v:val, "%s") >= 0', escape(sub, '\')))
-    endfor
-
-    if len(dirs) == 0
-        return {}
-    endif
-
-    return {'data': dirs, 'hint': join(dirs)}
 endfunction " }}}
 
 function! s:safe_chdir(cmd, dir) " {{{
@@ -458,7 +440,7 @@ function! s:safe_chdir(cmd, dir) " {{{
 endfunction " }}}
 
 function! s:ch_seg(state, key, cmd) " {{{
-    call s:safe_chdir(a:cmd, a:state.data[0])
+    call s:safe_chdir(a:cmd, a:state.data[0].path)
     let w:chbuf_cache = s:get_dirs()
     return {'state': a:state.transition('')}
 endfunction " }}}
@@ -472,13 +454,16 @@ function! s:cd_seg(state, key) " {{{
 endfunction " }}}
 
 function! s:accept_dir(state, key) " {{{
-    return {'result': a:state.data[0]}
-endfunction " }}}
+    if a:state.data[0].is_choosable()
+        return {'result': a:state.data[0]}
+    endif
 
-function! s:yank_dir(state, key) " {{{
-    let full_path = getcwd() . s:unescaped_path_seg_sep . a:state.data[0]
-    call setreg(v:register, full_path)
-    return {'final': a:state.config.separator . full_path}
+    if a:key == 'CTRL-N'
+        call mkdir(a:state.data[0], 'p')
+        return {'result': a:state.data[0]}
+    endif
+
+    return {'state': a:state}
 endfunction " }}}
 
 let s:chdir_key_handlers =
@@ -486,26 +471,38 @@ let s:chdir_key_handlers =
     \, 'CTRL-V': s:make_ref('accept_dir')
     \, 'CTRL-T': s:make_ref('accept_dir')
     \, 'CTRL-M': s:make_ref('accept_dir')
-    \, 'CTRL-Y': s:make_ref('yank_dir')
+    \, 'CTRL-N': s:make_ref('accept_dir')
+    \, 'CTRL-Y': s:make_ref('yank')
     \, ' ': s:make_ref('guarded_space')
     \}
 
-function! s:change_dir(cmd, key_handlers) " {{{
-    let w:chbuf_cache = s:get_dirs()
-    let result = getline#get_line_reactively_override_keys(s:make_ref('change_dir_callback'), a:key_handlers)
+function! s:prompt_dir(buffers, key_handlers) " {{{
+    let w:chbuf_cache = a:buffers
+    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), a:key_handlers)
     unlet w:chbuf_cache
+    return result
+endfunction " }}}
+
+function! s:change_dir(cmd, key_handlers) " {{{
+    let result = s:prompt_dir(s:get_dirs(), a:key_handlers)
     if !has_key(result, 'value')
         return
     endif
 
-    if result.key == 'CTRL-M'
-        call s:safe_chdir(result.value)
-    elseif result.key == 'CTRL-T'
-        execute 'silent' 'tabedit' escape(result.value, ' ')
-    elseif result.key == 'CTRL-S'
-        execute 'silent' 'split' escape(result.value, ' ')
-    elseif result.key == 'CTRL-V'
-        execute 'silent' 'vsplit' escape(result.value, ' ')
+    let buffer = result.value
+    let key = result.key
+
+    if key == 'CTRL-M' || key == 'CTRL-N'
+        call s:safe_chdir(a:cmd, buffer.path)
+    elseif key == 'CTRL-T'
+        execute 'silent' 'tabnew'
+        call buffer.switch()
+    elseif key == 'CTRL-S'
+        execute 'silent' 'split'
+        call buffer.switch()
+    elseif key == 'CTRL-V'
+        execute 'silent' 'vsplit'
+        call buffer.switch()
     endif
 endfunction " }}}
 
