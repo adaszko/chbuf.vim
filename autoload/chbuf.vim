@@ -60,14 +60,32 @@ function! s:ensure_ends_with_seg_sep(path) " {{{
     return a:path . s:unescaped_path_seg_sep
 endfunction " }}}
 
+function! s:file_dir() dict " {{{
+    return fnamemodify(self.path, ':h')
+endfunction " }}}
+
+function! s:dir_dir() dict " {{{
+    return self.path
+endfunction " }}}
+
+function! s:cd_buffer() dict " {{{
+    execute 'silent' 'cd' fnameescape(self.dir())
+endfunction " }}}
+
+function! s:lcd_buffer() dict " {{{
+    execute 'silent' 'lcd' fnameescape(self.dir())
+endfunction " }}}
+
 function! s:buffer_from_number(number, name) " {{{
     let path = expand('#' . a:number . ':p')
 
     if isdirectory(path)
         let path = s:ensure_ends_with_seg_sep(path)
         let set_suf_fn = 'set_dir_suffx'
+        let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
+        let dir_fn = 'file_dir'
     endif
 
     return { 'number':          a:number
@@ -76,6 +94,9 @@ function! s:buffer_from_number(number, name) " {{{
           \, 'change':          s:make_ref('change_to_number')
           \, 'is_choosable':    s:make_ref('is_number_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
+          \, 'dir':             s:make_ref(dir_fn)
+          \, 'cd':              s:make_ref('cd_buffer')
+          \, 'lcd':             s:make_ref('lcd_buffer')
           \}
 endfunction " }}}
 
@@ -93,14 +114,19 @@ function! s:buffer_from_path(path) " {{{
     if isdirectory(expanded)
         let expanded = s:ensure_ends_with_seg_sep(expanded)
         let set_suf_fn = 'set_dir_suffx'
+        let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
+        let dir_fn = 'file_dir'
     endif
 
     return { 'path':            expanded
           \, 'change':          s:make_ref('change_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
+          \, 'dir':             s:make_ref(dir_fn)
+          \, 'cd':              s:make_ref('cd_buffer')
+          \, 'lcd':             s:make_ref('lcd_buffer')
           \}
 endfunction " }}}
 
@@ -110,8 +136,10 @@ function! s:buffer_from_relative_path(relative) " {{{
     if isdirectory(absolute)
         let absolute = s:ensure_ends_with_seg_sep(absolute)
         let set_suf_fn = 'set_dir_suffx'
+        let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
+        let dir_fn = 'file_dir'
     endif
 
     return { 'relative':        a:relative
@@ -119,6 +147,9 @@ function! s:buffer_from_relative_path(relative) " {{{
           \, 'change':          s:make_ref('change_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
+          \, 'dir':             s:make_ref(dir_fn)
+          \, 'cd':              s:make_ref('cd_buffer')
+          \, 'lcd':             s:make_ref('lcd_buffer')
           \}
 endfunction " }}}
 
@@ -346,6 +377,19 @@ function! s:guarded_space(state, key) " {{{
     return {'state': a:state.transition(a:state.contents . a:key)}
 endfunction " }}}
 
+function! s:chdir(state, key) " {{{
+    let result = a:state.data[0]
+    if a:key == 'CTRL-I'
+        call result.cd()
+        return {'final': ':cd ' . result.dir()}
+    elseif a:key == 'CTRL-L'
+        call result.lcd()
+        return {'final': ':lcd ' . result.dir()}
+    else
+        throw 'Unhandled key: ' . a:key
+    endif
+endfunction " }}}
+
 let s:key_handlers =
     \{ 'CTRL-S': s:make_ref('accept')
     \, 'CTRL-V': s:make_ref('accept')
@@ -353,13 +397,14 @@ let s:key_handlers =
     \, 'CTRL-M': s:make_ref('accept')
     \, 'CTRL-N': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
+    \, 'CTRL-L': s:make_ref('chdir')
+    \, 'CTRL-I': s:make_ref('chdir')
     \, ' ': s:make_ref('guarded_space')
     \}
 
-function! s:prompt(buffers) " {{{
+function! s:prompt(buffers, key_handlers) " {{{
     let w:chbuf_cache = a:buffers
-    let w:chbuf_cache = s:set_segmentwise_shortest_unique_suffixes(w:chbuf_cache)
-    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
+    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), a:key_handlers)
     unlet w:chbuf_cache
     return result
 endfunction " }}}
@@ -386,20 +431,25 @@ function! s:change(result) " {{{
 endfunction " }}}
 
 function! s:choose_path_interactively(path_objects) " {{{
-    return s:change(s:prompt(a:path_objects))
+    return s:change(s:prompt(a:path_objects, s:key_handlers))
 endfunction " }}}
 
 function! chbuf#change_buffer(ignored_pattern) " {{{
-    return s:choose_path_interactively(s:get_buffers(a:ignored_pattern))
+    let buffers = s:get_buffers(a:ignored_pattern)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    return s:choose_path_interactively(buffers)
 endfunction " }}}
 
 function! chbuf#change_mixed(ignored_pattern) " {{{
     let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 
 function! chbuf#change_file() " {{{
-    return s:choose_path_interactively(s:get_glob_files())
+    let buffers = s:get_glob_files()
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    return s:choose_path_interactively(buffers)
 endfunction " }}}
 " }}}
 
@@ -439,95 +489,14 @@ function! s:get_dirs() " {{{
     return dirs
 endfunction " }}}
 
-function! s:safe_chdir(cmd, dir) " {{{
-    execute a:cmd escape(a:dir, ' ')
-endfunction " }}}
-
-function! s:ch_seg(state, key, cmd) " {{{
-    call s:safe_chdir(a:cmd, a:state.data[0].path)
-    let w:chbuf_cache = s:get_dirs()
-    return {'state': a:state.transition('')}
-endfunction " }}}
-
-function! s:lcd_seg(state, key) " {{{
-    return s:ch_seg(a:state, a:key, 'lcd')
-endfunction " }}}
-
-function! s:cd_seg(state, key) " {{{
-    return s:ch_seg(a:state, a:key, 'cd')
-endfunction " }}}
-
-function! s:accept_dir(state, key) " {{{
-    if a:state.data[0].is_choosable()
-        return {'result': a:state.data[0]}
-    endif
-
-    if a:key == 'CTRL-N'
-        call mkdir(a:state.data[0], 'p')
-        return {'result': a:state.data[0]}
-    endif
-
-    return {'state': a:state}
-endfunction " }}}
-
-let s:chdir_key_handlers =
-    \{ 'CTRL-S': s:make_ref('accept_dir')
-    \, 'CTRL-V': s:make_ref('accept_dir')
-    \, 'CTRL-T': s:make_ref('accept_dir')
-    \, 'CTRL-M': s:make_ref('accept_dir')
-    \, 'CTRL-N': s:make_ref('accept_dir')
-    \, 'CTRL-Y': s:make_ref('yank')
-    \, ' ': s:make_ref('guarded_space')
-    \}
-
-function! s:prompt_dir(buffers, key_handlers) " {{{
-    let w:chbuf_cache = a:buffers
-    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), a:key_handlers)
-    unlet w:chbuf_cache
-    return result
-endfunction " }}}
-
-function! s:change_dir(cmd, key_handlers) " {{{
-    let result = s:prompt_dir(s:get_dirs(), a:key_handlers)
-    if !has_key(result, 'value')
-        return
-    endif
-
-    let buffer = result.value
-    let key = result.key
-
-    if key == 'CTRL-M' || key == 'CTRL-N'
-        call s:safe_chdir(a:cmd, buffer.path)
-    elseif key == 'CTRL-T'
-        execute 'silent' 'tabnew'
-        call buffer.switch()
-    elseif key == 'CTRL-S'
-        execute 'silent' 'split'
-        call buffer.switch()
-    elseif key == 'CTRL-V'
-        execute 'silent' 'vsplit'
-        call buffer.switch()
-    endif
-endfunction " }}}
-
-function! s:chdir(cmd, tabfn) " {{{
-    let key_handlers = copy(s:chdir_key_handlers)
-    let key_handlers['CTRL-I'] = s:make_ref(a:tabfn)
-    call s:change_dir(a:cmd, key_handlers)
-endfunction " }}}
-
 function! chbuf#change_directory() " {{{
-    call s:chdir('cd', 'cd_seg')
-endfunction " }}}
-
-function! chbuf#local_change_directory() " {{{
-    call s:chdir('lcd', 'lcd_seg')
+    return s:choose_path_interactively(s:get_dirs())
 endfunction " }}}
 " }}}
 
 " {{{ Data Source: External Tools
 function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
-    " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html#//apple_ref/doc/uid/TP40001849-CJBEJBHH
+    " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html
     let keywords =
         \[ 'kMDItemFSName'
         \, 'kMDItemDisplayName'
@@ -555,7 +524,9 @@ function! s:query_spotlight(query) " {{{
 endfunction " }}}
 
 function! chbuf#change_file_spotlight(query) " {{{
-    return s:choose_path_interactively(s:query_spotlight(a:query))
+    let buffers = s:query_spotlight(a:query)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    return s:choose_path_interactively(buffers)
 endfunction " }}}
 " }}}
 

@@ -12,7 +12,6 @@ command! -nargs=* ChangeBuffer call chbuf#change_buffer(<q-args>)
 command! -nargs=* ChangeMixed call chbuf#change_mixed(<q-args>)
 command! ChangeFile call chbuf#change_file()
 command! ChangeDirectory call chbuf#change_directory()
-command! LocalChangeDirectory call chbuf#local_change_directory()
 
 
 if has('mac')
