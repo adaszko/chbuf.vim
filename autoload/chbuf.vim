@@ -151,7 +151,7 @@ function! s:get_buffers(ignored_pattern) " {{{
             continue
         endif
 
-        if !buflisted(buffer)
+        if !bufloaded(buffer)
             continue
         endif
 
