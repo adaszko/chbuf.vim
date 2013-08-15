@@ -48,14 +48,8 @@ COMMANDS                                                    *chbuf-commands*
 
 *:ChangeDirectory*
 
-    Issues an |:cd| on a directory in current directory subtree.  See also
-    |chbuf-<Tab>|.
-
-    This command honours 'ignorecase' and 'wildignore'.
-
-*:LocalChangeDirectory*
-
-    Like |:ChangeDirectory| but uses |:lcd| instead of |:cd|.
+    Jumps to any directory located below working one.  |chbuf-CTRL-I| executes |:cd|
+    on the one listed first, whereas |chbuf-CTRL-L| executes |:lcd|.
 
     This command honours 'ignorecase' and 'wildignore'.
 
@@ -63,7 +57,7 @@ COMMANDS                                                    *chbuf-commands*
 
     Executes raw mdfind {query} and presents results as a getline menu.
     Provides some simple raw mdfind query keywords completion.  See
-    |chbuf-references| for exact query syntax.  Examples:
+    |chbuf-references| for exact syntax of a query.  Examples:
 
     :Spotlight kMDItemContentType == 'public.plain-text' && kMDItemFSName == '*foo*'
 
@@ -74,17 +68,20 @@ COMMANDS                                                    *chbuf-commands*
 
 KEYS                                                        *chbuf-keys*
 
-This section lists the keys that are not defined by getline internally or
-their behaviour has been redefined for the purposes of chbuf.
+This section lists only the keys that are not defined by getline internally or
+their behaviour has been redefined for the purposes of chbuf.  Please refer to
+|getline-keys| section for further information.
 
 
 CTRL-I                                                      *chbuf-CTRL-I*
 <Tab>                                                       *chbuf-<Tab>*
 
-    For |:ChangeDirectory| it changes current directory (|:lcd|) to the
-    selection and continues, for every other command exported by chbuf, it
-    jumps to the first item in selections list and also changes current
-    directory (again, |:lcd|) to where that file is placed.
+    Changes current directory (|:cd|) to the one listed first or to the
+    directory in which file list first is placed.
+
+CTRL-L                                                      *chbuf-CTRL-L*
+
+    Like |chbuf-CTRL-I| but executes |:lcd| instead of |:cd|.
 
 CTRL-S                                                      *chbuf-CTRL-S*
 
@@ -100,18 +97,12 @@ CTRL-T                                                      *chbuf-CTRL-T*
 
 CTRL-Y                                                      *chbuf-CTRL-Y*
 
-    Copies the full path of current selection into v:register.
+    Copies the full path of current selection into |v:register|.
 
 CTRL-M                                                      *chbuf-CTRL-M*
 <CR>                                                        *chbuf-<CR>*
 
-    The behaviour of <CR> is just like |getline-CTRL-M| with the exception
-    that you’re not allowed to select non-existent file.  Use |chbuf-CTRL-N|
-    to force even if file doesn’t exist.
-
-CTRL-N                                                      *chbuf-CTRL-N*
-
-    Like |chbuf-CTRL-M| but allows for selection even of non-existent file.
+    Executes |:edit| on item listed first.
 
 
 CAVEATS                                                     *chbuf-caveats*
@@ -131,4 +122,4 @@ Spotlight query syntax:
     http://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html
 
 =============================================================================
-vim:tw=78:ts=8:noet:ft=help:norl:
+vim:tw=78:ts=8:noet:ft=help:norl:ai:

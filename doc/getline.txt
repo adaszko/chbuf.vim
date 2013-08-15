@@ -1,25 +1,25 @@
 *getline.txt*		Interactive line input library
 =============================================================================
 
-INTRODUCTION                                        *getline-intro*
+INTRODUCTION                                            *getline-intro*
 
 getline is a library that implements generic (reusable), interactive, keyboard
 driven menu.  It does not offer anything of direct value to the Vim user, it
 is only to be used by other scripts.
 
 
-AUTHOR                                              *getline-author*
+AUTHOR                                                  *getline-author*
 
     Adam Szkoda <adaszko@gmail.com>
 
 
-LICENSE                                             *getline-license*
+LICENSE                                                 *getline-license*
 
     BSD3
 
 
-EXPORTS                                             *getline-exports*
-FUNCTIONS                                           *getline-functions*
+EXPORTS                                                 *getline-exports*
+FUNCTIONS                                               *getline-functions*
 
 *getline#get_line()* ()
 
@@ -43,9 +43,9 @@ FUNCTIONS                                           *getline-functions*
         ['hint': string,]
     }
 
-    Elements in square brackets are optional. 'data' is an object that is to
-    be returned upon hitting <CR> by the user.  It isn’t inspected in any way
-    and thus can be of any type.  'hint' is a string that is displayed to the
+    Elements in square brackets are optional. {data} is an object that is to
+    be returned upon hitting <CR> by the user.  It isn't inspected in any way
+    and thus can be of any type.  {hint} is a string that is displayed to the
     user with the intention of suggesting what can be still chosen.
 
     Given the above specification, the simplest possible {callback} function
@@ -63,7 +63,7 @@ FUNCTIONS                                           *getline-functions*
     The meaning of {callback} is described in |getline#get_line_reactively()|.
 
     {key_handlers} is a dictionary mapping key names to handler functions.
-    Here’s an example from |chbuf.txt| plugin:
+    Here’s an example from |chbuf.txt| plug-in:
 
     let s:key_handlers =
         \{ 'CTRL-S': function('accept')
@@ -118,7 +118,51 @@ FUNCTIONS                                           *getline-functions*
     crucial state.transition() function is called causing change in what the
     user sees.
 
-CAVEATS                                             *getline-caveats*
+KEYS                                                    *getline-keys*
+
+
+Please note that key names like 'CTRL-M' are preferred above the (more
+readable) <CR>.  It is because some <CR> keys/sequences may not be present in
+the terminal version of Vim and thus are non-portable.
+
+
+CTRL-[                                                  *getline-CTRL-[*
+<Esc>                                                   *getline-<Esc>*
+
+    Exits from getline prompt.
+
+CTRL-M                                                  *getline-CTRL-M*
+<CR>                                                    *getline-<CR>*
+
+    Causes getline to return control to the caller of one of
+    getline#get_line_* functions with current value of “data.”  The exact
+    format of returned dictionary is as follows:
+
+    {
+        ['value': unspecified type,]
+        'key': string,
+    }
+
+    {key} specifies what was used to end input (e.g. 'CTRL-[' for <Esc>),
+    {value} is the value returned by the last call to {callback} in {result}
+    dictionary key.  {value} is only present if {result} key was present.
+
+CTRL-H                                                  *getline-CTRL-H*
+<BS>                                                    *getline-<BS>*
+
+    Removes one character before the cursor.
+
+
+CTRL-W                                                  *getline-CTRL-W*
+
+    Removes one word before the cursor.
+
+CTRL-U                                                  *getline-CTRL-U*
+
+    Removes everything to the start of line.
+
+
+CAVEATS                                                 *getline-caveats*
 
 Due to a lack of knowledge of a better way, getline has to use a weird
 heuristic to calculate width of the window expressed in characters.  It
@@ -127,11 +171,11 @@ value of 'columns' option.  It seems to work pretty well, but as with all
 solutions of this kind, unforeseen troubles may arise.
 
 
-ABOUT                                               *getline-about*
+ABOUT                                                   *getline-about*
 
 For latest version, reporting bugs, etc. see:
 
     http://github.com/adaszko/chbuf.vim
 
 =============================================================================
-vim:tw=78:ts=8:noet:ft=help:norl:
+vim:tw=78:ts=8:noet:ft=help:norl:ai:

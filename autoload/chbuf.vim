@@ -349,10 +349,6 @@ function! s:accept(state, key) " {{{
         return {'result': a:state.data[0]}
     endif
 
-    if a:key == 'CTRL-N'
-        return {'result': a:state.data[0]}
-    endif
-
     return {'state': a:state}
 endfunction " }}}
 
@@ -395,16 +391,15 @@ let s:key_handlers =
     \, 'CTRL-V': s:make_ref('accept')
     \, 'CTRL-T': s:make_ref('accept')
     \, 'CTRL-M': s:make_ref('accept')
-    \, 'CTRL-N': s:make_ref('accept')
     \, 'CTRL-Y': s:make_ref('yank')
     \, 'CTRL-L': s:make_ref('chdir')
     \, 'CTRL-I': s:make_ref('chdir')
     \, ' ': s:make_ref('guarded_space')
     \}
 
-function! s:prompt(buffers, key_handlers) " {{{
+function! s:prompt(buffers) " {{{
     let w:chbuf_cache = a:buffers
-    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), a:key_handlers)
+    let result = getline#get_line_reactively_override_keys(s:make_ref('get_line_callback'), s:key_handlers)
     unlet w:chbuf_cache
     return result
 endfunction " }}}
@@ -416,7 +411,7 @@ function! s:change(result) " {{{
     let buffer = a:result.value
     let key = a:result.key
 
-    if key == 'CTRL-M' || key == 'CTRL-N'
+    if key == 'CTRL-M'
         call buffer.change()
     elseif key == 'CTRL-T'
         execute 'tabnew'
@@ -431,7 +426,7 @@ function! s:change(result) " {{{
 endfunction " }}}
 
 function! s:choose_path_interactively(path_objects) " {{{
-    return s:change(s:prompt(a:path_objects, s:key_handlers))
+    return s:change(s:prompt(a:path_objects))
 endfunction " }}}
 
 function! chbuf#change_buffer(ignored_pattern) " {{{
