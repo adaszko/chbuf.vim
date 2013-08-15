@@ -190,7 +190,11 @@ function! s:get_buffers(ignored_pattern) " {{{
             continue
         endif
 
-        if !bufloaded(buffer)
+        if !buflisted(buffer)
+            continue
+        endif
+
+        if !empty(getbufvar(buffer, 'buftype'))
             continue
         endif
 
