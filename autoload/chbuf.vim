@@ -417,10 +417,6 @@ function! s:good_dirs(path) " {{{
     endif
 endfunction " }}}
 
-function! s:append_path_seg_sep(dir) " {{{
-    return a:dir . s:unescaped_path_seg_sep
-endfunction " }}}
-
 function! s:list_glob(glob) " {{{
     let dirs = s:glob_list(a:glob, 1)
     call filter(dirs, 's:good_dirs(v:val)')
