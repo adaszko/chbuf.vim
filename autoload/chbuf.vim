@@ -218,7 +218,7 @@ function! s:set_unique_segments_prefix(bufs) " {{{
     return result
 endfunction " }}}
 
-function! g:by_segments(left, right) " {{{
+function! s:by_segments(left, right) " {{{
     let less = s:case_sensitive_file_system ? a:left.segments <# a:right.segments : a:left.segments <? a:right.segments
     return less ? -1 : 1
 endfunction " }}}
@@ -253,7 +253,7 @@ function! s:set_segmentwise_shortest_unique_suffixes(buffers) " {{{
         let buf.segments = join(reverse(split(buf.path, sep)), s:unescaped_path_seg_sep)
     endfor
 
-    call sort(result, 'g:by_segments')
+    call sort(result, 's:by_segments')
     let result = s:uniq_segments(result)
 
     for buf in result
