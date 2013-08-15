@@ -63,7 +63,11 @@ COMMANDS                                                    *chbuf-commands*
 
     Executes raw mdfind {query} and presents results as a getline menu.
     Provides some simple raw mdfind query keywords completion.  See
-    |chbuf-references| for query syntax.
+    |chbuf-references| for exact query syntax.  Examples:
+
+    :Spotlight kMDItemContentType == 'public.plain-text' && kMDItemFSName == '*foo*'
+
+    :Spotlight kMDItemFSInvisible == '*' && kMDItemFSName == '*bar*'
 
     Only available on Mac OS X.
 

@@ -72,7 +72,7 @@ function! s:buffer_from_number(number, name) " {{{
 endfunction " }}}
 
 function! s:switch_to_path() dict " {{{
-    execute 'silent' 'edit' self.path
+    execute 'silent' 'edit' escape(self.path, ' ')
 endfunction " }}}
 
 function! s:path_choosable() dict " {{{
@@ -501,11 +501,11 @@ function! s:change_dir(cmd, key_handlers) " {{{
     if result.key == 'CTRL-M'
         call s:safe_chdir(result.value)
     elseif result.key == 'CTRL-T'
-        execute 'silent' 'tabedit' result.value
+        execute 'silent' 'tabedit' escape(result.value, ' ')
     elseif result.key == 'CTRL-S'
-        execute 'silent' 'split' result.value
+        execute 'silent' 'split' escape(result.value, ' ')
     elseif result.key == 'CTRL-V'
-        execute 'silent' 'vsplit' result.value
+        execute 'silent' 'vsplit' escape(result.value, ' ')
     endif
 endfunction " }}}
 
@@ -532,8 +532,10 @@ function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
         \, 'kMDItemDisplayName'
         \, 'kMDItemFSCreationDate'
         \, 'kMDItemFSContentChangeDate'
+        \, 'kMDItemContentType'
         \, 'kMDItemContentTypeTree'
         \, 'kMDItemFSSize'
+        \, 'kMDItemFSInvisible'
         \, '$time.now'
         \, '$time.today'
         \, '$time.yesterday'
