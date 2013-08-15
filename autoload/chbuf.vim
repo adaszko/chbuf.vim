@@ -36,7 +36,7 @@ function! s:make_ref(name) " {{{
     return function(printf('<SNR>%s_%s', s:script_id, a:name))
 endfunction " }}}
 
-function! s:switch_to_number() dict " {{{
+function! s:change_to_number() dict " {{{
     execute 'silent' 'buffer' self.number
 endfunction " }}}
 
@@ -65,14 +65,14 @@ function! s:buffer_from_number(number, name) " {{{
     return { 'number':          a:number
           \, 'path':            path
           \, 'name':            a:name
-          \, 'switch':          s:make_ref('switch_to_number')
+          \, 'change':          s:make_ref('change_to_number')
           \, 'is_choosable':    s:make_ref('is_number_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
 endfunction " }}}
 
-function! s:switch_to_path() dict " {{{
-    execute 'silent' 'edit' escape(self.path, ' ')
+function! s:change_to_path() dict " {{{
+    execute 'silent' 'edit' fnameescape(self.path)
 endfunction " }}}
 
 function! s:path_choosable() dict " {{{
@@ -90,7 +90,7 @@ function! s:buffer_from_path(path) " {{{
     endif
 
     return { 'path':            expanded
-          \, 'switch':          s:make_ref('switch_to_path')
+          \, 'change':          s:make_ref('change_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
@@ -108,7 +108,7 @@ function! s:buffer_from_relative_path(relative) " {{{
 
     return { 'relative':        a:relative
           \, 'path':            absolute
-          \, 'switch':          s:make_ref('switch_to_path')
+          \, 'change':          s:make_ref('change_to_path')
           \, 'is_choosable':    s:make_ref('path_choosable')
           \, 'set_suffix':      s:make_ref(set_suf_fn)
           \}
@@ -364,16 +364,16 @@ function! s:change(result) " {{{
     let key = a:result.key
 
     if key == 'CTRL-M' || key == 'CTRL-N'
-        call buffer.switch()
+        call buffer.change()
     elseif key == 'CTRL-T'
         execute 'tabnew'
-        call buffer.switch()
+        call buffer.change()
     elseif key == 'CTRL-S'
         execute 'split'
-        call buffer.switch()
+        call buffer.change()
     elseif key == 'CTRL-V'
         execute 'vsplit'
-        call buffer.switch()
+        call buffer.change()
     endif
 endfunction " }}}
 
