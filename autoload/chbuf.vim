@@ -8,7 +8,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
-" {{{ Data Source: Filenames
+" {{{ Data Source: Internal
 if !exists('+shellslash') || &shellslash
     let s:unescaped_path_seg_sep = '/'
     let s:escaped_path_seg_sep = '/'
@@ -300,12 +300,12 @@ function! s:uniq_segments(buffers) " {{{
     return result
 endfunction " }}}
 
-function! s:set_segmentwise_shortest_unique_suffixes(buffers) " {{{
+function! s:set_segmentwise_shortest_unique_suffixes(buffers, attrib) " {{{
     let result = a:buffers
 
     let sep = printf('\V%s\+', s:escaped_path_seg_sep)
     for buf in result
-        let buf.segments = join(reverse(split(buf.path, sep)), s:unescaped_path_seg_sep)
+        let buf.segments = join(reverse(split(get(buf, a:attrib), sep)), s:unescaped_path_seg_sep)
     endfor
 
     call sort(result, 's:by_segments')
@@ -447,24 +447,24 @@ endfunction " }}}
 
 function! chbuf#change_buffer(ignored_pattern) " {{{
     let buffers = s:get_buffers(a:ignored_pattern)
-    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'path')
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 
 function! chbuf#change_mixed(ignored_pattern) " {{{
     let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
-    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'path')
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 
-function! chbuf#change_file_system(glob_pattern) " {{{
+function! chbuf#change_current(glob_pattern) " {{{
     let buffers = s:get_glob_objects(a:glob_pattern)
-    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'relative')
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 " }}}
 
-" {{{ Data Source: External Tools
+" {{{ Data Source: External
 function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
     " https://developer.apple.com/library/mac/#documentation/Carbon/Conceptual/SpotlightQuery/Concepts/QueryFormat.html
     let keywords =
@@ -494,14 +494,26 @@ function! s:error(msg) " {{{
     echohl None
 endfunction " }}}
 
-function! chbuf#change_file_spotlight(query) " {{{
+function! chbuf#spotlight_current(query) " {{{
     let output = system(printf("mdfind -onlyin %s %s", shellescape(getcwd()), shellescape(a:query)))
     if v:shell_error > 0
         call s:error("mdfind: " . substitute(output, "\\v\n*$", "", ""))
         return
     endif
+    let paths = map(split(output, "\n"), 'fnamemodify(v:val, ":.")')
+    let buffers = map(paths, 's:buffer_from_relative_path(v:val)')
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'relative')
+    return s:choose_path_interactively(buffers)
+endfunction " }}}
+
+function! chbuf#spotlight(query) " {{{
+    let output = system(printf("mdfind %s", shellescape(a:query)))
+    if v:shell_error > 0
+        call s:error("mdfind: " . substitute(output, "\\v\n*$", "", ""))
+        return
+    endif
     let buffers = map(split(output, "\n"), 's:buffer_from_path(v:val)')
-    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
+    let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'path')
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 " }}}

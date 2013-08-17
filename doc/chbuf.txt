@@ -36,18 +36,6 @@ COMMANDS                                                    *chbuf-commands*
 
     This command honours 'ignorecase'.
 
-*:Spotlight* [{query}]
-
-    Executes raw mdfind {query} and presents results as a getline menu.
-    Provides some simple raw mdfind query keywords completion.  See
-    |chbuf-references| for exact syntax of a query.  Examples:
-
-    :Spotlight kMDItemContentType == 'public.plain-text' && kMDItemFSName == '*foo*'
-
-    :Spotlight kMDItemFSInvisible == '*' && kMDItemFSName == '*bar*'
-
-    Only available on Mac OS X.
-
 
 KEYS                                                        *chbuf-keys*
 
@@ -90,7 +78,7 @@ CTRL-M                                                      *chbuf-CTRL-M*
 
 CAVEATS                                                     *chbuf-caveats*
 
-There will be troubles when using |:Spotlight| with file names on your file
+There will be troubles when using Spotlight with file names on your file
 system containing newline characters.
 
 

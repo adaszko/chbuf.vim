@@ -10,11 +10,12 @@ set cpo&vim
 
 command! -nargs=* ChangeBuffer call chbuf#change_buffer(<q-args>)
 command! -nargs=* ChangeMixed call chbuf#change_mixed(<q-args>)
-command! -nargs=? ChangeFileSystem call chbuf#change_file_system(<q-args>)
+command! -nargs=? ChangeFileSystem call chbuf#change_current(<q-args>)
 
 
 if has('mac')
-    command! -nargs=+ -complete=custom,chbuf#spotlight_query_completion Spotlight call chbuf#change_file_spotlight(<q-args>)
+    command! -nargs=+ -complete=custom,chbuf#spotlight_query_completion Spotlight call chbuf#spotlight(<q-args>)
+    command! -nargs=+ -complete=custom,chbuf#spotlight_query_completion SpotlightCurrent call chbuf#spotlight_current(<q-args>)
 endif
 
 
