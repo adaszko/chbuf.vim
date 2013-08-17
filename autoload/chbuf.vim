@@ -161,9 +161,21 @@ function! s:glob_list(wildcard, flags) " {{{
     return glob(a:wildcard, a:flags, 1)
 endfunction " }}}
 
-function! s:get_glob_files() " {{{
-    let paths = s:glob_list('**', 0)
-    call filter(paths, 'getftype(v:val) =~# "\\v(file|link)"')
+function! s:is_file_system_object(path) " {{{
+    let type = getftype(a:path)
+    if type == 'file' || type == 'dir'
+        return 1
+    elseif type == 'link'
+        let resolved = getftype(resolved(a:path))
+        return resolved == 'file' || resolved == 'dir'
+    endif
+
+    return 0
+endfunction " }}}
+
+function! s:get_glob_objects(glob_pattern) " {{{
+    let paths = s:glob_list(a:glob_pattern, 0)
+    call filter(paths, 's:is_file_system_object(v:val)')
     call map(paths, 's:buffer_from_relative_path(v:val)')
     return paths
 endfunction " }}}
@@ -445,51 +457,10 @@ function! chbuf#change_mixed(ignored_pattern) " {{{
     return s:choose_path_interactively(buffers)
 endfunction " }}}
 
-function! chbuf#change_file() " {{{
-    let buffers = s:get_glob_files()
+function! chbuf#change_file_system(glob_pattern) " {{{
+    let buffers = s:get_glob_objects(a:glob_pattern)
     let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
     return s:choose_path_interactively(buffers)
-endfunction " }}}
-" }}}
-
-" {{{ Data Source: Directories
-function! s:good_dirs(path) " {{{
-    let segments = split(a:path, s:unescaped_path_seg_sep)
-
-    if segments[-1] == '.'
-        return 0
-    endif
-
-    if len(segments) != 1 && segments[-1] == '..'
-        return 0
-    endif
-
-    let type = getftype(a:path)
-    if type == 'dir'
-        return 1
-    elseif type == 'link'
-        return getftype(resolve(a:path)) == 'dir'
-    else
-        return 0
-    endif
-endfunction " }}}
-
-function! s:list_glob(glob) " {{{
-    let dirs = s:glob_list(a:glob, 1)
-    call filter(dirs, 's:good_dirs(v:val)')
-    return dirs
-endfunction " }}}
-
-function! s:get_dirs() " {{{
-    let dirs = s:list_glob('**')
-    call extend(dirs, s:list_glob('**/.*'))
-    call map(dirs, 's:buffer_from_relative_path(v:val)')
-    let dirs = s:set_segmentwise_shortest_unique_suffixes(dirs)
-    return dirs
-endfunction " }}}
-
-function! chbuf#change_directory() " {{{
-    return s:choose_path_interactively(s:get_dirs())
 endfunction " }}}
 " }}}
 

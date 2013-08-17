@@ -36,23 +36,6 @@ COMMANDS                                                    *chbuf-commands*
 
     This command honours 'ignorecase'.
 
-*:ChangeFile*
-
-    Jumps to a file placed anywhere in current directory subtree.  This may be
-    arbitrarily slow depending on how high in directory tree you currently are
-    and how many files you have in your file system (|CTRL-C| is your friend.)
-    If you’re on Mac OS X, use |:Spotlight| instead as it is much faster and
-    more general.
-
-    This command honours 'ignorecase' and 'wildignore'.
-
-*:ChangeDirectory*
-
-    Jumps to any directory located below working one.  |chbuf-CTRL-I| executes |:cd|
-    on the one listed first, whereas |chbuf-CTRL-L| executes |:lcd|.
-
-    This command honours 'ignorecase' and 'wildignore'.
-
 *:Spotlight* [{query}]
 
     Executes raw mdfind {query} and presents results as a getline menu.

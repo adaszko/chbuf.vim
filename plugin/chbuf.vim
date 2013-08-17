@@ -10,8 +10,7 @@ set cpo&vim
 
 command! -nargs=* ChangeBuffer call chbuf#change_buffer(<q-args>)
 command! -nargs=* ChangeMixed call chbuf#change_mixed(<q-args>)
-command! ChangeFile call chbuf#change_file()
-command! ChangeDirectory call chbuf#change_directory()
+command! -nargs=? ChangeFileSystem call chbuf#change_file_system(<q-args>)
 
 
 if has('mac')
