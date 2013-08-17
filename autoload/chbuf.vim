@@ -517,13 +517,19 @@ function! chbuf#spotlight_query_completion(arglead, cmdline, cursorpos) " {{{
     return join(keywords, "\n")
 endfunction " }}}
 
-function! s:query_spotlight(query) " {{{
-    let paths = split(system(printf("mdfind -onlyin %s %s", shellescape(getcwd()), shellescape(a:query))), "\n")
-    return map(paths, 's:buffer_from_path(v:val)')
+function! s:error(msg) " {{{
+    echohl ErrorMsg
+    echo a:msg
+    echohl None
 endfunction " }}}
 
 function! chbuf#change_file_spotlight(query) " {{{
-    let buffers = s:query_spotlight(a:query)
+    let output = system(printf("mdfind -onlyin %s %s", shellescape(getcwd()), shellescape(a:query)))
+    if v:shell_error > 0
+        call s:error("mdfind: " . substitute(output, "\\v\n*$", "", ""))
+        return
+    endif
+    let buffers = map(split(output, "\n"), 's:buffer_from_path(v:val)')
     let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers)
     return s:choose_path_interactively(buffers)
 endfunction " }}}
