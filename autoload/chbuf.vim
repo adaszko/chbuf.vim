@@ -166,7 +166,7 @@ function! s:is_file_system_object(path) " {{{
     if type == 'file' || type == 'dir'
         return 1
     elseif type == 'link'
-        let resolved = getftype(resolved(a:path))
+        let resolved = getftype(resolve(a:path))
         return resolved == 'file' || resolved == 'dir'
     endif
 
