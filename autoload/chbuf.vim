@@ -9,23 +9,6 @@ set cpo&vim
 
 
 " {{{ Data Source: Internal
-if !exists('+shellslash') || &shellslash
-    let s:unescaped_path_seg_sep = '/'
-    let s:escaped_path_seg_sep = '/'
-else
-    let s:unescaped_path_seg_sep = '\'
-    let s:escaped_path_seg_sep = '\\'
-endif
-
-let s:script_name = expand('<sfile>')
-
-function! s:is_file_system_case_sensitive() " {{{
-    let ignores_case = filereadable(tolower(s:script_name)) && filereadable(toupper(s:script_name))
-    return !ignores_case
-endfunction " }}}
-
-let s:case_sensitive_file_system = s:is_file_system_case_sensitive()
-
 function! s:get_script_id() " {{{
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_get_script_id$')
 endfun " }}}
@@ -49,15 +32,15 @@ function! s:set_file_suffix(suffix) dict " {{{
 endfunction " }}}
 
 function! s:set_dir_suffix(suffix) dict " {{{
-    let self.suffix = a:suffix . s:unescaped_path_seg_sep
+    let self.suffix = a:suffix . g:chbuf#common#unescaped_path_seg_sep
 endfunction " }}}
 
 function! s:ensure_ends_with_seg_sep(path) " {{{
-    if strpart(a:path, strlen(a:path) - 1) ==# s:unescaped_path_seg_sep
+    if strpart(a:path, strlen(a:path) - 1) ==# g:chbuf#common#unescaped_path_seg_sep
         return a:path
     endif
 
-    return a:path . s:unescaped_path_seg_sep
+    return a:path . g:chbuf#common#unescaped_path_seg_sep
 endfunction " }}}
 
 function! s:file_dir() dict " {{{
@@ -131,7 +114,7 @@ function! s:buffer_from_path(path) " {{{
 endfunction " }}}
 
 function! s:buffer_from_relative_path(relative) " {{{
-    let absolute = join([getcwd(), a:relative], s:unescaped_path_seg_sep)
+    let absolute = join([getcwd(), a:relative], g:chbuf#common#unescaped_path_seg_sep)
 
     if isdirectory(absolute)
         let absolute = s:ensure_ends_with_seg_sep(absolute)
@@ -180,9 +163,12 @@ function! s:get_glob_objects(glob_pattern) " {{{
     return paths
 endfunction " }}}
 
-function! s:get_old_files(ignored_pattern) " {{{
-    let result = map(copy(v:oldfiles), "fnamemodify(v:val, ':p')")
-    let result = map(result, 's:buffer_from_path(v:val)')
+function! s:get_recents(ignored_pattern) " {{{
+    if !exists("g:chbuf_recent_paths")
+        let g:chbuf_recent_paths = chbuf#common#load_recents(chbuf#common#get_recents_file_path())
+    endif
+
+    let result = map(copy(g:chbuf_recent_paths), 's:buffer_from_path(v:val[1])')
 
     if a:ignored_pattern == ""
         return result
@@ -202,11 +188,7 @@ function! s:get_buffers(ignored_pattern) " {{{
             continue
         endif
 
-        if !buflisted(buffer)
-            continue
-        endif
-
-        if !empty(getbufvar(buffer, 'buftype'))
+        if !chbuf#common#is_good_buffer(buffer)
             continue
         endif
 
@@ -214,13 +196,7 @@ function! s:get_buffers(ignored_pattern) " {{{
             continue
         endif
 
-        let name = bufname(buffer)
-
-        if name == ''
-            continue
-        endif
-
-        let buf = s:buffer_from_number(buffer, name)
+        let buf = s:buffer_from_number(buffer, bufname(buffer))
         if buf.path && buf.path =~ a:ignored_pattern
             continue
         endif
@@ -243,7 +219,7 @@ function! s:segmentwise_shortest_unique_prefix(cur, ref) " {{{
             break
         endif
 
-        let equal = s:case_sensitive_file_system ? a:cur[i] ==# a:ref[i] : a:cur[i] ==? a:ref[i]
+        let equal = g:chbuf#common#case_sensitive_file_system ? a:cur[i] ==# a:ref[i] : a:cur[i] ==? a:ref[i]
         if equal
             continue
         endif
@@ -274,7 +250,7 @@ function! s:set_unique_segments_prefix(bufs) " {{{
 endfunction " }}}
 
 function! s:by_segments(left, right) " {{{
-    let less = s:case_sensitive_file_system ? a:left.segments <# a:right.segments : a:left.segments <? a:right.segments
+    let less = g:chbuf#common#case_sensitive_file_system ? a:left.segments <# a:right.segments : a:left.segments <? a:right.segments
     return less ? -1 : 1
 endfunction " }}}
 
@@ -290,7 +266,7 @@ function! s:uniq_segments(buffers) " {{{
     let prev = a:buffers[0]
     let result = [prev]
     for i in range(1, len(a:buffers)-1)
-        let equal = s:case_sensitive_file_system ? a:buffers[i].segments ==# prev.segments : a:buffers[i].segments ==? prev.segments
+        let equal = g:chbuf#common#case_sensitive_file_system ? a:buffers[i].segments ==# prev.segments : a:buffers[i].segments ==? prev.segments
         if !equal
             call add(result, a:buffers[i])
         endif
@@ -303,9 +279,9 @@ endfunction " }}}
 function! s:set_segmentwise_shortest_unique_suffixes(buffers, attrib) " {{{
     let result = a:buffers
 
-    let sep = printf('\V%s\+', s:escaped_path_seg_sep)
+    let sep = printf('\V%s\+', g:chbuf#common#escaped_path_seg_sep)
     for buf in result
-        let buf.segments = join(reverse(split(get(buf, a:attrib), sep)), s:unescaped_path_seg_sep)
+        let buf.segments = join(reverse(split(get(buf, a:attrib), sep)), g:chbuf#common#unescaped_path_seg_sep)
     endfor
 
     call sort(result, 's:by_segments')
@@ -317,7 +293,7 @@ function! s:set_segmentwise_shortest_unique_suffixes(buffers, attrib) " {{{
 
     let unique_segmentwise_prefixes = s:set_unique_segments_prefix(result)
     for i in range(len(result))
-        call result[i].set_suffix(join(reverse(unique_segmentwise_prefixes[i]), s:unescaped_path_seg_sep))
+        call result[i].set_suffix(join(reverse(unique_segmentwise_prefixes[i]), g:chbuf#common#unescaped_path_seg_sep))
         unlet result[i].segments
     endfor
 
@@ -452,7 +428,7 @@ function! chbuf#change_buffer(ignored_pattern) " {{{
 endfunction " }}}
 
 function! chbuf#change_mixed(ignored_pattern) " {{{
-    let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_old_files(a:ignored_pattern))
+    let buffers = extend(s:get_buffers(a:ignored_pattern), s:get_recents(a:ignored_pattern))
     let buffers = s:set_segmentwise_shortest_unique_suffixes(buffers, 'path')
     return s:choose_path_interactively(buffers)
 endfunction " }}}

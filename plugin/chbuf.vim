@@ -19,6 +19,12 @@ if has('mac')
 endif
 
 
+augroup chbuf
+    autocmd!
+    autocmd BufAdd,BufEnter,BufLeave,BufWritePost * call chbuf#common#add_recent(0 + expand('<abuf>'))
+    autocmd VimLeavePre * call chbuf#common#store_recents()
+augroup END
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

@@ -7,7 +7,7 @@
 `chbuf` provides several functionalities:
 
   * Jumping to loaded buffers (like `:buffer` command, but neater) &mdash; see `:help :ChangeBuffer`
-  * Jumping to recently edited files (paths are taken from `v:oldfiles` variable; quite useful if you’re returning to some file after restart) &mdash; `:help :ChangeMixed`
+  * Jumping to recently edited files &mdash; `:help :ChangeMixed`
   * Jumping to files in current directory subtree &mdash; `:help :ChangeFile`
   * Quickly and interactively changing current working directory &mdash; `:help :ChangeDirectory`
   * And on Mac OS X, jumping to a file that comes from a result of Spotlight search &mdash; `:help :Spotlight`
