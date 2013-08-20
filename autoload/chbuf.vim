@@ -48,7 +48,7 @@ function! s:set_file_suffix(suffix) dict " {{{
     let self.suffix = a:suffix
 endfunction " }}}
 
-function! s:set_dir_suffx(suffix) dict " {{{
+function! s:set_dir_suffix(suffix) dict " {{{
     let self.suffix = a:suffix . s:unescaped_path_seg_sep
 endfunction " }}}
 
@@ -81,7 +81,7 @@ function! s:buffer_from_number(number, name) " {{{
 
     if isdirectory(path)
         let path = s:ensure_ends_with_seg_sep(path)
-        let set_suf_fn = 'set_dir_suffx'
+        let set_suf_fn = 'set_dir_suffix'
         let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
@@ -113,7 +113,7 @@ function! s:buffer_from_path(path) " {{{
 
     if isdirectory(expanded)
         let expanded = s:ensure_ends_with_seg_sep(expanded)
-        let set_suf_fn = 'set_dir_suffx'
+        let set_suf_fn = 'set_dir_suffix'
         let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
@@ -135,7 +135,7 @@ function! s:buffer_from_relative_path(relative) " {{{
 
     if isdirectory(absolute)
         let absolute = s:ensure_ends_with_seg_sep(absolute)
-        let set_suf_fn = 'set_dir_suffx'
+        let set_suf_fn = 'set_dir_suffix'
         let dir_fn = 'dir_dir'
     else
         let set_suf_fn = 'set_file_suffix'
