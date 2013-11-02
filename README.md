@@ -12,16 +12,16 @@
   * Quickly and interactively changing current working directory &mdash; `:help :ChangeDirectory`
   * And on Mac OS X, jumping to a file that comes from a result of Spotlight search &mdash; `:help :Spotlight`
 
-All of these share common user interface which is that of `getline` library
-(see `:help getline.txt`).  The philosophy is that user should be presented
-with minimum information required.  Prior to calling `getline`, choices are
-filtered (each of mentioned commands takes a regex argument) and segment-wise
-shortest unique suffix is computed.  In case of file system paths, it means
-file base name (the last segment of a path) if it’s unique or last two path
-segments if that’s unique, or last three if that’s unique and so on until all
-of the path segments are taken into account, which is guaranteed to be unique
-by the file system.  Illustrating this on an example, the shortest unique
-suffixes of:
+All of the above share a common user interface which is that of `getline`
+library (see `:help getline.txt`).  The philosophy is that user should be
+presented with minimum information required.  Prior to calling `getline`,
+choices are filtered (each of mentioned commands takes a regex argument) and
+segment-wise shortest unique suffix is computed.  In case of file system
+paths, it means file base name (the last segment of a path) if it’s unique or
+last two path segments if that’s unique, or last three if that’s unique and so
+on until all of the path segments are taken into account, which is guaranteed
+to be unique by the file system.  Illustrating this on an example, the
+shortest unique suffixes of:
 
     /home/adaszko/foo
     /home/adaszko/bar
@@ -89,9 +89,9 @@ plug-in of this kind is compatible with my work flow and design requirements.
 Also, I get the impression that Spotlight (and its `mdfind` command line
 counterpart) is under-utilised for such a fast and powerful tool.
 
-## Bugs
+## Known Problems
 
-It's generally slower on Windows.
+It's generally slower and “flickers” on Windows.
 
 ## Author
 
